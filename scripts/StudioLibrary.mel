@@ -1,0 +1,6 @@
+
+global proc StudioLibrary()
+{
+   python("import studiolibrary; studiolibrary.main()");
+}
+
