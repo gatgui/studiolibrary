@@ -45,7 +45,7 @@ class Analytics:
         try:
             if self.isEnabled():
                 url = self._url + '&t=event&ec=' + name + '&ea=' + value
-                self.send(url)
+                #self.send(url)
         except Exception:
             pass
 
@@ -56,7 +56,7 @@ class Analytics:
         try:
             if self.isEnabled():
                 url = self._url + '&t=appview&cd=' + name
-                self.send(url)
+                #self.send(url)
         except Exception:
             pass
 

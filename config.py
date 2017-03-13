@@ -26,7 +26,7 @@ studiolibrary.Library.DEFAULT_PLUGINS = [
 
 studiolibrary.CHECK_FOR_UPDATES_ENABLED = True
 
-studiolibrary.Analytics.ENABLED = True
+studiolibrary.Analytics.ENABLED = False
 studiolibrary.Analytics.DEFAULT_ID = "UA-50172384-1"
 
 # Shared data
