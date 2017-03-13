@@ -24,7 +24,7 @@ studiolibrary.Library.DEFAULT_PLUGINS = [
     "studiolibraryplugins.selectionsetplugin",
 ]
 
-studiolibrary.CHECK_FOR_UPDATES_ENABLED = True
+studiolibrary.CHECK_FOR_UPDATES_ENABLED = False
 
 studiolibrary.Analytics.ENABLED = False
 studiolibrary.Analytics.DEFAULT_ID = "UA-50172384-1"

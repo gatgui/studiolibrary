@@ -416,8 +416,8 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
                 self._updateThread = studiolibrary.CheckForUpdatesThread(self)
                 self.connect(self._updateThread, QtCore.SIGNAL('updateAvailable()'), self.setUpdateAvailable)
             self._updateThread.start()
-        else:
-            logger.debug('Check for updates has been disabled!')
+        #else:
+        #    logger.debug('Check for updates has been disabled!')
 
     def _itemSelectionChanged(self):
         """
