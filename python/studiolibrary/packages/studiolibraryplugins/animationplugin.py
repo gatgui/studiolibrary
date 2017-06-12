@@ -521,7 +521,8 @@ Would you like to show this message again?"""
         record = self.record()
         record.setDescription(description)
         iconPath = self.iconPath()
-        contents = [os.path.dirname(self.sequencePath())]
+        seqPath = self.sequencePath()
+        contents = ([os.path.dirname(seqPath)] if seqPath is not None else [])
         record.save(objects=objects, path=path, contents=contents,
                     iconPath=iconPath, startFrame=startFrame,
                     endFrame=endFrame, bakeConnected=bakeConnected)
