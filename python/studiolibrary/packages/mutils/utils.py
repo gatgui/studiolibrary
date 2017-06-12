@@ -8,6 +8,7 @@ from studioqt import QtWidgets
 try:
     import maya.mel
     import maya.cmds
+    import maya.OpenMaya
 except ImportError:
     traceback.print_exc()
 
@@ -195,6 +196,32 @@ def disconnectAll(name):
     for destination in maya.cmds.listConnections(name, plugs=True, source=False) or []:
         source, = maya.cmds.listConnections(destination, plugs=True)
         maya.cmds.disconnectAttr(source, destination)
+
+
+def isProxyAttribute(name):
+    """
+    :type name: str
+    :rtype: bool
+    """
+    if maya.cmds.about(apiVersion=True) < 201650:
+        return False
+    spl = name.split('.')
+    if len(spl) <= 1:
+        return False
+    node = spl[0]
+    attr = '.'.join(spl[1:])
+    mobject = maya.OpenMaya.MObject()
+    try:
+        selectionlist = maya.OpenMaya.MSelectionList()
+        selectionlist.add(node)
+        selectionlist.getDependNode(0, mobject)
+        fnnode = maya.OpenMaya.MFnDependencyNode(mobject)
+        mattr = fnnode.attribute(attr)
+        fnattr = maya.OpenMaya.MFnAttribute(mattr)
+        return fnattr.isProxyAttribute()
+    except:
+        # If node or attribute doesn't exist, return False
+        return False
 
 
 def getSelectedObjects():

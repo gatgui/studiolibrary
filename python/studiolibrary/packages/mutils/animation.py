@@ -469,7 +469,9 @@ class Animation(mutils.Pose):
             if bakeConnected:
                 maya.cmds.undoInfo(openChunk=True)
                 mutils.bakeConnected(objects, time=(start, end), sampleBy=sampleBy)
-            for name in objects:
+            idx = 0
+            while idx < len(objects):
+                name = objects[idx]
                 if maya.cmds.copyKey(name, time=(start, end), includeUpperBound=False, option='keys'):
                     transform, = maya.cmds.duplicate(name, name='CURVE', parentOnly=True)
                     dstCurves.append(transform)
@@ -479,9 +481,16 @@ class Animation(mutils.Pose):
                     attrs = list(set(attrs) - set(['translate', 'rotate', 'scale']))
                     for attr in attrs:
                         fullname = '%s.%s' % (transform, attr)
-                        dstCurve, = maya.cmds.listConnections(fullname, destination=False) or [None]
-                        if dstCurve:
-                            dstCurve = maya.cmds.rename(dstCurve, 'CURVE')
+                        dstNode, = maya.cmds.listConnections(fullname, destination=False) or [None]
+                        if dstNode:
+                            if mutils.isProxyAttribute(fullname):
+                                if not dstNode in objects:
+                                    print("Add '%s' to controllers to export" % dstNode)
+                                    objects.append(dstNode)
+                                    # Seems this is also required
+                                    self.add(dstNode)
+                                continue
+                            dstCurve = maya.cmds.rename(dstNode, 'CURVE')
                             srcCurve = mutils.animCurve('%s.%s' % (name, attr))
                             if srcCurve and 'animCurve' in maya.cmds.nodeType(srcCurve):
                                 preInfinity = maya.cmds.getAttr(srcCurve + '.preInfinity')
@@ -498,6 +507,7 @@ class Animation(mutils.Pose):
                                 maya.cmds.cutKey(dstCurve, time=(MIN_TIME_LIMIT, start - 1))
                                 maya.cmds.cutKey(dstCurve, time=(end + 1, MAX_TIME_LIMIT))
                                 validAnimCurves.append(dstCurve)
+                idx += 1
 
             mayaPath = os.path.join(path, 'animation.mb')
             posePath = os.path.join(path, 'pose.json')
