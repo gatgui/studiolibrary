@@ -535,7 +535,7 @@ class MirrorTable(mutils.SelectionSet):
         :rtype: bool
         """
         if side:
-            return side in obj
+            return side in name
         return False
 
     def mirrorObject(self, srcObj):

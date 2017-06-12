@@ -238,6 +238,8 @@ class Record(studiolibrary.BasePath, studiolibrary.LibraryItem):
         path = self.path()
 
         for src in contents or []:
+            if not src:
+                continue
             basename = os.path.basename(src)
             dst = path + "/" + basename
             logger.info('Moving Content: {0} => {1}'.format(src, dst))
