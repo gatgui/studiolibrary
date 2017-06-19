@@ -52,3 +52,10 @@ docs/_build/
 
 # PyBuilder
 target/
+
+/release/
+/debug/
+/eco/
+/*.dblite
+/*.env.tmp
+
