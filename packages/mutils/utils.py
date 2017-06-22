@@ -1,10 +1,25 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/mutils\utils.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 import shutil
 import platform
 import traceback
+
 from studioqt import QtGui
 from studioqt import QtCore
 from studioqt import QtWidgets
+
+
 try:
     import maya.mel
     import maya.cmds
@@ -13,9 +28,9 @@ except ImportError:
 
 import mutils
 
+
 class MayaUtilsError(Exception):
     """Base class for exceptions in this module."""
-    pass
 
 
 class ObjectsError(MayaUtilsError):
@@ -47,15 +62,16 @@ def system():
 
 
 def isMac():
-    return system().startswith('mac') or system().startswith('os') or system().startswith('darwin')
+    return system().startswith("mac") or system().startswith("os") \
+        or system().startswith("darwin")
 
 
 def isWindows():
-    return system().lower().startswith('win')
+    return system().lower().startswith("win")
 
 
 def isLinux():
-    return system().lower().startswith('lin')
+    return system().lower().startswith("lin")
 
 
 def isMaya():
@@ -73,16 +89,17 @@ def isMaya():
 def selectionModifiers():
     """
     Return the current selection modifiers.
-    
+
     :rtype: dict
     """
-    result = {'add': False,
-     'deselect': False}
+    result = {"add": False, "deselect": False}
     modifiers = QtWidgets.QApplication.keyboardModifiers()
+
     if modifiers == QtCore.Qt.ShiftModifier:
-        result['deselect'] = True
+        result["deselect"] = True
     elif modifiers == QtCore.Qt.ControlModifier:
-        result['add'] = True
+        result["add"] = True
+
     return result
 
 
@@ -90,7 +107,7 @@ def ls(*args, **kwargs):
     """
     :rtype: list[Node]
     """
-    return [ mutils.Node(name) for name in maya.cmds.ls(*args, **kwargs) or [] ]
+    return [mutils.Node(name) for name in maya.cmds.ls(*args, **kwargs) or []]
 
 
 def listAttr(node, **kwargs):
@@ -100,7 +117,7 @@ def listAttr(node, **kwargs):
     :rtype: list[mutils.Attribute]
     """
     attrs = maya.cmds.listAttr(node.name(), **kwargs)
-    return [ mutils.Attribute(node.name(), attr) for attr in attrs or [] ]
+    return [mutils.Attribute(node.name(), attr) for attr in attrs or []]
 
 
 def currentFrameRange():
@@ -108,11 +125,13 @@ def currentFrameRange():
     :rtype: (int, int)
     """
     start, end = selectedFrameRange()
+
     if end == start:
-        start, end = animationFrameRange()
+        start, end = selectedObjectsFrameRange()
         if start == end:
             start, end = playbackFrameRange()
-    return (start, end)
+
+    return start, end
 
 
 def playbackFrameRange():
@@ -121,33 +140,36 @@ def playbackFrameRange():
     """
     start = maya.cmds.playbackOptions(query=True, min=True)
     end = maya.cmds.playbackOptions(query=True, max=True)
-    return (start, end)
+    return start, end
 
 
 def selectedFrameRange():
     """
     :rtype: (int, int)
     """
-    result = maya.mel.eval('timeControl -q -range $gPlayBackSlider')
-    start, end = result.replace('"', '').split(':')
+    result = maya.mel.eval("timeControl -q -range $gPlayBackSlider")
+    start, end = result.replace('"', "").split(":")
     start, end = int(start), int(end)
     if end - start == 1:
         end = start
-    return (start, end)
+    return start, end
 
 
-def animationFrameRange(dagPaths = None):
+def selectedObjectsFrameRange(dagPaths=None):
     """
     :rtype : (int, int)
     """
     start = 0
     end = 0
+
     if not dagPaths:
         dagPaths = maya.cmds.ls(selection=True) or []
+
     if dagPaths:
         start = int(maya.cmds.findKeyframe(dagPaths, which='first'))
         end = int(maya.cmds.findKeyframe(dagPaths, which='last'))
-    return (start, end)
+
+    return start, end
 
 
 def connectedAttrs(objects):
@@ -155,15 +177,15 @@ def connectedAttrs(objects):
     """
     result = []
     if not objects:
-        raise Exception('No objects specified')
+        raise Exception("No objects specified")
+
     connections = maya.cmds.listConnections(objects, connections=True, p=True, d=False, s=True) or []
     for i in range(0, len(connections), 2):
         dstObj = connections[i]
-        srcObj = connections[i + 1]
+        srcObj = connections[i+1]
         nodeType = maya.cmds.nodeType(srcObj)
-        if 'animCurve' not in nodeType:
+        if "animCurve" not in nodeType:
             result.append(dstObj)
-
     return result
 
 
@@ -173,19 +195,35 @@ def currentModelPanel():
     """
     currentPanel = maya.cmds.getPanel(withFocus=True)
     currentPanelType = maya.cmds.getPanel(typeOf=currentPanel)
-    if currentPanelType not in ('modelPanel',):
+
+    if currentPanelType not in ['modelPanel']:
         return None
+
     return currentPanel
 
 
-def bakeConnected(objects, time, sampleBy = 1):
+def bakeConnected(objects, time, sampleBy=1):
     """
     """
     bakeAttrs = connectedAttrs(objects)
+
     if bakeAttrs:
-        maya.cmds.bakeResults(bakeAttrs, time=time, shape=False, simulation=True, sampleBy=sampleBy, controlPoints=False, minimizeRotation=True, bakeOnOverrideLayer=False, preserveOutsideKeys=False, sparseAnimCurveBake=False, disableImplicitControl=True, removeBakedAttributeFromLayer=False)
+        maya.cmds.bakeResults(
+            bakeAttrs,
+            time=time,
+            shape=False,
+            simulation=True,
+            sampleBy=sampleBy,
+            controlPoints=False,
+            minimizeRotation=True,
+            bakeOnOverrideLayer=False,
+            preserveOutsideKeys=False,
+            sparseAnimCurveBake=False,
+            disableImplicitControl=True,
+            removeBakedAttributeFromLayer=False,
+        )
     else:
-        print 'cannot find connection to bake!'
+        print "cannot find connection to bake!"
 
 
 def disconnectAll(name):
@@ -204,35 +242,29 @@ def getSelectedObjects():
     """
     selection = maya.cmds.ls(selection=True)
     if not selection:
-        raise mutils.SelectionError('No objects selected!')
+        raise mutils.SelectionError("No objects selected!")
     return selection
 
 
 def animCurve(fullname):
     """
+    Return the animation curve for the give attribute.
+
     :type fullname:
     :rtype: None | str
     """
-    result = None
-    if maya.cmds.objExists(fullname):
-        n = maya.cmds.listConnections(fullname, plugs=True, destination=False)
-        if n and 'animCurve' in maya.cmds.nodeType(n):
-            result = n
-        elif n and 'character' in maya.cmds.nodeType(n):
-            n = maya.cmds.listConnections(n, plugs=True, destination=False)
-            if n and 'animCurve' in maya.cmds.nodeType(n):
-                result = n
-        if result:
-            return result[0].split('.')[0]
+    attribute = mutils.Attribute(fullname)
+    return attribute.animCurve()
 
 
 def deleteUnknownNodes():
     """
     """
-    nodes = maya.cmds.ls(type='unknown')
+    nodes = maya.cmds.ls(type="unknown")
     if nodes:
         for node in nodes:
-            if maya.cmds.objExists(node) and maya.cmds.referenceQuery(node, inr=True):
+            if maya.cmds.objExists(node) and \
+                    maya.cmds.referenceQuery(node, inr=True):
                 maya.cmds.delete(node)
 
 
@@ -240,16 +272,18 @@ def getSelectedAttrs():
     """
     :rtype: list[str]
     """
-    attributes = maya.cmds.channelBox('mainChannelBox', q=True, selectedMainAttributes=True)
+    attributes = maya.cmds.channelBox("mainChannelBox", q=True, selectedMainAttributes=True)
+
     if attributes is not None:
         attributes = str(attributes)
-        attributes = attributes.replace('tx', 'translateX')
-        attributes = attributes.replace('ty', 'translateY')
-        attributes = attributes.replace('tz', 'translateZ')
-        attributes = attributes.replace('rx', 'rotateX')
-        attributes = attributes.replace('ry', 'rotateY')
-        attributes = attributes.replace('rz', 'rotateZ')
+        attributes = attributes.replace("tx", "translateX")
+        attributes = attributes.replace("ty", "translateY")
+        attributes = attributes.replace("tz", "translateZ")
+        attributes = attributes.replace("rx", "rotateX")
+        attributes = attributes.replace("ry", "rotateY")
+        attributes = attributes.replace("rz", "rotateZ")
         attributes = eval(attributes)
+
     return attributes
 
 

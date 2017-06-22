@@ -1,20 +1,16 @@
-# Copyright 2016 by Kurt Rathjen. All Rights Reserved.
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
 #
-# Permission to use, modify, and distribute this software and its
-# documentation for any purpose and without fee is hereby granted,
-# provided that the above copyright notice appear in all copies and that
-# both that copyright notice and this permission notice appear in
-# supporting documentation, and that the name of Kurt Rathjen
-# not be used in advertising or publicity pertaining to distribution
-# of the software without specific, written prior permission.
-# KURT RATHJEN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-# ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# KURT RATHJEN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
-# ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
-# IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-# OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
 
-import studioqt
 import studiolibrary
 
 
@@ -22,9 +18,7 @@ def main(
     name=None,
     path=None,
     show=True,
-    plugins=None,
     analytics=True,
-    root=None,  # Legacy
     **kwargs
 ):
     """
@@ -33,34 +27,28 @@ def main(
     :type name: str
     :type path: str
     :type show: bool
-    :type plugins: list[str]
     :type analytics: bool
-    :type root: str
     :type kwargs: dict
+
     :rtype: studiolibrary.Library
     """
     studiolibrary.analytics().setEnabled(analytics)
 
-    if not name:
-        library = studiolibrary.Library.default()
-    else:
+    isNewUser = not path and not studiolibrary.libraries()
+
+    if show and isNewUser:
+        library = studiolibrary.showWelcomeDialog(showOnAccepted=False)
+    elif name:
         library = studiolibrary.Library.instance(name)
-
-    if plugins is None:
-        library.setPlugins(studiolibrary.Library.DEFAULT_PLUGINS)
     else:
-        library.setPlugins(plugins)
-
-    if root:  # Legacy
-        path = root
+        library = studiolibrary.Library.default()
 
     if path:
         library.setPath(path)
 
-    studiolibrary.enableMayaClosedEvent()
+    library.setKwargs(kwargs)
 
     if show:
-        with studioqt.app():
-            library.show(**kwargs)
+        library.show()
 
     return library

@@ -1,22 +1,38 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/studioqt\widgets\folderswidget\folderitem.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import logging
+
 from studioqt import QtGui
 from studioqt import QtWidgets
+
 import studioqt
-import studiolibrary
-__all__ = ['Folder']
+
+
+__all__ = ["Folder"]
+
 logger = logging.getLogger(__name__)
+
 
 class InvalidPathError(Exception):
     """
     """
-    pass
 
 
 class FolderItem(object):
 
-    def __init__(self, path, treeWidget = None):
+    def __init__(self, path, treeWidget=None):
         """
         :type path: str
         """
@@ -35,8 +51,8 @@ class FolderItem(object):
         """
         self._orderIndex = orderIndex
 
-    def openLocation(self):
-        studioqt.openLocation(self.path())
+    def showInFolder(self):
+        studioqt.showInFolder(self.path())
 
     def orderIndex(self):
         """
@@ -55,7 +71,7 @@ class FolderItem(object):
 
     def rename(self, name):
         src = self.path()
-        path = self.dirname() + '/' + name
+        path = self.dirname() + "/" + name
         os.rename(src, path)
         self._path = path
 
@@ -81,44 +97,47 @@ class FolderItem(object):
         :type color: QtGui.QColor
         """
         if isinstance(color, QtGui.QColor):
-            color = 'rgb(%d, %d, %d, %d)' % color.getRgb()
-        self._settings['color'] = color
+            color = ('rgb(%d, %d, %d, %d)' % color.getRgb())
+
+        self._settings["color"] = color
         self._pixmap = None
 
     def color(self):
         """
         :rtype: QtGui.QColor or None
         """
-        color = self._settings.get('color', None)
-        iconPath = self._settings.get('iconPath', None)
+        color = self._settings.get("color", None)
+        iconPath = self._settings.get("iconPath", None)
+
         if not color and not iconPath:
             color = self.treeWidget().palette().color(self.treeWidget().foregroundRole())
             color = studioqt.Color.fromColor(color).toString()
+
         return color
 
     def setIconVisible(self, value):
         """
         :type value: bool
         """
-        self._settings['iconVisibility'] = value
+        self._settings["iconVisibility"] = value
 
     def isIconVisible(self):
         """
         :rtype: bool
         """
-        return self._settings.get('iconVisibility', True)
+        return self._settings.get("iconVisibility", True)
 
     def setBold(self, value):
         """
         :type value: bool
         """
-        self._settings['bold'] = value
+        self._settings["bold"] = value
 
     def isBold(self):
         """
         :rtype: bool
         """
-        return self._settings.get('bold', False)
+        return self._settings.get("bold", False)
 
     def name(self):
         """
@@ -130,7 +149,7 @@ class FolderItem(object):
         """
         :rtype: bool
         """
-        return not self._settings.get('iconPath')
+        return not self._settings.get("iconPath")
 
     def setIconPath(self, iconPath):
         """
@@ -143,16 +162,19 @@ class FolderItem(object):
         """
         :rtype: str
         """
-        iconPath = self._settings.get('iconPath', None)
+        iconPath = self._settings.get("iconPath", None)
+
         index = self.treeWidget().indexFromPath(self.path())
         expanded = self.treeWidget().isExpanded(index)
+
         if not iconPath:
-            if 'Trash' in self.name():
-                iconPath = studioqt.resource().get('icons', 'delete')
+            if "Trash" in self.name():
+                iconPath = studioqt.resource().get("icons", "delete")
             elif expanded:
-                iconPath = studioqt.resource().get('icons', 'folder_open')
+                iconPath = studioqt.resource().get("icons", "folder_open")
             else:
-                iconPath = studioqt.resource().get('icons', 'folder')
+                iconPath = studioqt.resource().get("icons", "folder")
+
         return iconPath
 
     def setPixmap(self, pixmap):
@@ -166,10 +188,13 @@ class FolderItem(object):
         :rtype: QtGui.QPixmap
         """
         if not self.isIconVisible():
-            return studiolibrary.resource().pixmap('')
+            return studioqt.resource().pixmap("")
+
         color = self.color()
         iconPath = self.iconPath()
+
         self._pixmap = studioqt.Pixmap(iconPath)
         if color:
             self._pixmap.setColor(color)
+
         return self._pixmap

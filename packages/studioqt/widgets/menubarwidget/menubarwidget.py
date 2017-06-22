@@ -1,33 +1,93 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/studioqt\widgets\menubarwidget\menubarwidget.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 import logging
+
 from studioqt import QtGui
 from studioqt import QtCore
 from studioqt import QtWidgets
+
+
 import studioqt
+
+
 logger = logging.getLogger(__name__)
 
+
 class MenuBarWidget(QtWidgets.QFrame):
+
     ICON_COLOR = QtGui.QColor(255, 255, 255)
-    SPACING = 5
-    DEFAULT_EXPANDED_HEIGHT = 38
+
+    SPACING = 4
+
+    DEFAULT_EXPANDED_HEIGHT = 36
     DEFAULT_COLLAPSED_HEIGHT = 10
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         QtWidgets.QFrame.__init__(self, parent)
+
         self._dpi = 1
         self._expanded = True
         self._expandedHeight = self.DEFAULT_EXPANDED_HEIGHT
         self._collapsedHeight = self.DEFAULT_COLLAPSED_HEIGHT
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(self.SPACING)
+
         self.setLayout(layout)
+
         self._leftToolBar = QtWidgets.QToolBar(self)
         self._rightToolBar = QtWidgets.QToolBar(self)
+
         self._leftToolBar.layout().setSpacing(self.SPACING)
         self._rightToolBar.layout().setSpacing(self.SPACING)
+
         self.layout().addWidget(self._leftToolBar)
         self.layout().addWidget(self._rightToolBar)
+
+    def addAction(self, name, icon=None, tip=None, callback=None, side="Right"):
+        """
+        Add a button/action to menu bar widget.
+
+        :type name: str
+        :type icon: QtWidget.QIcon
+        :param tip: str
+        :param side: str
+        :param callback: func
+        :rtype: QtWidget.QAction
+        """
+
+        # The method below is needed to fix an issue with PySide2.
+        def _callback():
+            callback()
+
+        if side == "Left":
+            action = self.addLeftAction(name)
+        else:
+            action = self.addRightAction(name)
+
+        if icon:
+            action.setIcon(icon)
+
+        if tip:
+            action.setToolTip(tip)
+            action.setStatusTip(tip)
+
+        if callback:
+            action.triggered.connect(_callback)
+
+        return action
 
     def dpi(self):
         return self._dpi
@@ -42,6 +102,7 @@ class MenuBarWidget(QtWidgets.QFrame):
 
     def refreshSize(self):
         self.setChildrenHeight(self.height())
+
         if self.isExpanded():
             self.expand()
         else:
@@ -64,6 +125,7 @@ class MenuBarWidget(QtWidgets.QFrame):
 
     def widgets(self):
         widgets = []
+
         for i in range(0, self.layout().count()):
             w = self.layout().itemAt(i).widget()
             if isinstance(w, QtWidgets.QWidget):
@@ -71,12 +133,31 @@ class MenuBarWidget(QtWidgets.QFrame):
 
         return widgets
 
+    def findAction(self, text):
+
+        action1 = self._findAction(self._leftToolBar, text)
+        action2 = self._findAction(self._rightToolBar, text)
+
+        return action1 or action2
+
+    def _findAction(self, toolBar, text):
+
+        for child in toolBar.children():
+            if isinstance(child, QtWidgets.QAction):
+                if child.text() == text:
+                    return child
+
     def findToolButton(self, text):
+
         button1 = self._findToolButton(self._leftToolBar, text)
         button2 = self._findToolButton(self._rightToolBar, text)
-        return button1 or button2
+
+        button = button1 or button2
+
+        return button
 
     def _findToolButton(self, toolBar, text):
+
         for child in toolBar.children():
             if isinstance(child, QtWidgets.QAction):
                 if child.text() == text:
@@ -84,8 +165,10 @@ class MenuBarWidget(QtWidgets.QFrame):
 
     def actions(self):
         actions = []
+
         children = self._leftToolBar.children()
         children.extend(self._rightToolBar.children())
+
         for child in children:
             if isinstance(child, QtWidgets.QAction):
                 actions.append(child)
@@ -131,14 +214,20 @@ class MenuBarWidget(QtWidgets.QFrame):
             w.setHidden(value)
 
     def setChildrenHeight(self, height):
+
         for w in self.widgets():
             w.setFixedHeight(height)
 
-        width = height + self.SPACING * self.dpi()
+        padding = self.SPACING * self.dpi()
+
+        width = height + (padding * 2)
+        height = height - padding
+
         self._leftToolBar.setFixedHeight(height)
-        self._leftToolBar.setIconSize(QtCore.QSize(width, height - 5))
+        self._leftToolBar.setIconSize(QtCore.QSize(width, height))
+
         self._rightToolBar.setFixedHeight(height)
-        self._rightToolBar.setIconSize(QtCore.QSize(width, height - 5))
+        self._rightToolBar.setIconSize(QtCore.QSize(width, height))
 
     def resizeEvent(self, *args, **kwargs):
         self.refreshSize()
@@ -150,32 +239,38 @@ class MenuBarWidget(QtWidgets.QFrame):
 def showExample():
     """
     Run a simple example of the widget.
-    
+
     :rtype: QtWidgets.QWidget
     """
+
     with studioqt.app():
 
         def triggered():
-            print 'Triggered'
+            print "Triggered"
 
         def triggered2():
-            print 'Triggered2'
+            print "Triggered2"
 
         widget = studioqt.MenuBarWidget()
-        icon = studioqt.icon('add')
-        action = widget.addLeftAction('New Item')
+
+        icon = studioqt.icon("add")
+        action = widget.addLeftAction("New Item")
         action.setIcon(icon)
         action.triggered.connect(triggered)
+
         lineedit = QtWidgets.QLineEdit()
         widget.layout().insertWidget(1, lineedit)
-        widget.setExpandedHeight(35)
-        icon = studioqt.icon('settings')
-        action = widget.addRightAction('Settings')
+        widget.setExpandedHeight(50)
+
+        icon = studioqt.icon("settings")
+        action = widget.addRightAction("Settings")
         action.setIcon(icon)
         action.triggered.connect(triggered2)
+
         widget.show()
+
         return widget
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     showExample()

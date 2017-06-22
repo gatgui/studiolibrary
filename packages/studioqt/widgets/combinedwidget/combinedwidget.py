@@ -1,65 +1,106 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/studioqt\widgets\combinedwidget\combinedwidget.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import logging
+
 from studioqt import QtGui
 from studioqt import QtCore
 from studioqt import QtWidgets
+
 import studioqt
+
 from .combinedlistview import CombinedListView
 from .combinedtreewidget import CombinedTreeWidget
+
 from .combinedwidgetitem import CombinedWidgetItem
 from .combineditemdelegate import CombinedItemDelegate
+
+
 logger = logging.getLogger(__name__)
 
+
 class CombinedWidget(QtWidgets.QWidget):
+
     DEFAULT_PADDING = 5
+
     DEFAULT_ZOOM_AMOUNT = 32
     DEFAULT_TEXT_HEIGHT = 20
     DEFAULT_WHEEL_SCROLL_STEP = 2
+
     DEFAULT_MIN_SPACING = 0
     DEFAULT_MAX_SPACING = 50
+
     DEFAULT_MIN_LIST_SIZE = 15
     DEFAULT_MIN_ICON_SIZE = 50
+
     itemClicked = QtCore.Signal(object)
     itemDoubleClicked = QtCore.Signal(object)
+
     zoomChanged = QtCore.Signal(object)
     spacingChanged = QtCore.Signal(object)
+
     groupClicked = QtCore.Signal(object)
 
     def __init__(self, *args):
         QtWidgets.QWidget.__init__(self, *args)
+
         self._dpi = 1
         self._padding = self.DEFAULT_PADDING
+
         w, h = self.DEFAULT_ZOOM_AMOUNT, self.DEFAULT_ZOOM_AMOUNT
+
         self._iconSize = QtCore.QSize(w, h)
         self._zoomAmount = self.DEFAULT_ZOOM_AMOUNT
         self._isItemTextVisible = True
+
         self._treeWidget = CombinedTreeWidget(self)
+
         self._listView = CombinedListView(self)
         self._listView.setTreeWidget(self._treeWidget)
+
         self._delegate = CombinedItemDelegate()
         self._delegate.setCombinedWidget(self)
+
         self._listView.setItemDelegate(self._delegate)
         self._treeWidget.setItemDelegate(self._delegate)
+
         self._toastWidget = studioqt.ToastWidget(self)
         self._toastWidget.hide()
         self._toastEnabled = True
-        self._textColor = QtGui.QColor(255, 255, 255)
-        self._textSelectedColor = QtGui.QColor(255, 255, 255)
+
+        self._textColor = QtGui.QColor(255, 255, 255, 200)
+        self._textSelectedColor = QtGui.QColor(255, 255, 255, 200)
         self._backgroundColor = QtGui.QColor(255, 255, 255, 30)
         self._backgroundHoverColor = QtGui.QColor(255, 255, 255, 35)
         self._backgroundSelectedColor = QtGui.QColor(30, 150, 255)
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._treeWidget)
         layout.addWidget(self._listView)
+
         header = self.treeWidget().header()
         header.sortIndicatorChanged.connect(self._sortIndicatorChanged)
+
         self.setLayout(layout)
+
         self.listView().itemClicked.connect(self._itemClicked)
         self.listView().itemDoubleClicked.connect(self._itemDoubleClicked)
+
         self.treeWidget().itemClicked.connect(self._itemClicked)
         self.treeWidget().itemDoubleClicked.connect(self._itemDoubleClicked)
+
         self.itemMoved = self._listView.itemMoved
         self.itemDropped = self._listView.itemDropped
         self.itemSelectionChanged = self._treeWidget.itemSelectionChanged
@@ -67,7 +108,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def _sortIndicatorChanged(self):
         """
         Triggered when the sort indicator changes.
-        
+
         :rtype: None
         """
         pass
@@ -75,7 +116,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def _itemClicked(self, item):
         """
         Triggered when the given item has been clicked.
-        
+
         :type item: studioqt.CombinedWidgetItem
         :rtype: None
         """
@@ -87,7 +128,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def _itemDoubleClicked(self, item):
         """
         Triggered when the given item has been double clicked.
-        
+
         :type item: studioqt.CombinedWidgetItem
         :rtype: None
         """
@@ -96,7 +137,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def resizeEvent(self, event):
         """
         Reimplemented to update the toast widget when the widget resizes.
-        
+
         :type event: QtCore.QEvent
         :rtype: None
         """
@@ -105,7 +146,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def udpateToastWidget(self):
         """
         Update the toast widget position.
-        
+
         :rtype: None
         """
         self._toastWidget.alignTo(self)
@@ -123,10 +164,10 @@ class CombinedWidget(QtWidgets.QWidget):
         """
         return self._toastEnabled
 
-    def setToast(self, text, duration = None):
+    def setToast(self, text, duration=None):
         """
         Show a toast with the given text for the given duration.
-        
+
         :type text: str
         :type duration: None or int
         :rtype: None
@@ -138,7 +179,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def sortOrder(self):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().sortOrder()
         """
         return self.treeWidget().sortOrder()
@@ -146,7 +187,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def sortColumn(self):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().sortColumn()
         """
         return self.treeWidget().sortColumn()
@@ -154,7 +195,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def sortByColumn(self, *args):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().sortByColumn(*args)
         """
         self.treeWidget().sortByColumn(*args)
@@ -162,7 +203,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def groupOrder(self):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().groupOrder()
         """
         return self.treeWidget().groupOrder()
@@ -170,7 +211,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def groupColumn(self):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().groupColumn()
         """
         return self.treeWidget().groupColumn()
@@ -178,7 +219,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def groupByColumn(self, *args):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().groupByColumn(*args)
         """
         self.treeWidget().groupByColumn(*args)
@@ -186,7 +227,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setColumnHidden(self, column, hidden):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().setColumnHidden(column, hidden)
         """
         self.treeWidget().setColumnHidden(column, hidden)
@@ -194,7 +235,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setLocked(self, value):
         """
         Disables drag and drop.
-        
+
         :Type value: bool
         :rtype: None
         """
@@ -204,7 +245,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def scrollToItem(self, item):
         """
         Ensures that the item is visible.
-        
+
         :type item: QtWidgets.QTreeWidgetItem
         :rtype: None
         """
@@ -216,7 +257,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def scrollToSelectedItem(self):
         """
         Ensures that the item is visible.
-        
+
         :rtype: None
         """
         item = self.selectedItem()
@@ -226,9 +267,9 @@ class CombinedWidget(QtWidgets.QWidget):
     def dpi(self):
         """
         return the zoom multiplier.
-        
+
         Used for high resolution devices.
-        
+
         :rtype: int
         """
         return self._dpi
@@ -236,9 +277,9 @@ class CombinedWidget(QtWidgets.QWidget):
     def setDpi(self, dpi):
         """
         Set the zoom multiplier.
-        
+
         Used for high resolution devices.
-        
+
         :type dpi: int
         """
         self._dpi = dpi
@@ -247,7 +288,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def itemAt(self, pos):
         """
         Return the current item at the given pos.
-        
+
         :type pos: QtWidgets.QPoint
         :rtype: studioqt.CombinedWidgetItem
         """
@@ -256,10 +297,10 @@ class CombinedWidget(QtWidgets.QWidget):
         else:
             return self.treeView().itemAt(pos)
 
-    def insertItems(self, items, itemAt = None):
+    def insertItems(self, items, itemAt=None):
         """
         Insert the given items at the given itemAt position.
-        
+
         :type items: list[studioqt.CombinedWidgetItem]
         :type itemAt: studioqt.CombinedWidgetItem
         :rtype: Nones
@@ -268,10 +309,10 @@ class CombinedWidget(QtWidgets.QWidget):
         self.moveItems(items, itemAt=itemAt)
         self.treeWidget().setItemsSelected(items, True)
 
-    def moveItems(self, items, itemAt = None):
+    def moveItems(self, items, itemAt=None):
         """
         Move the given items to the given itemAt position.
-        
+
         :type items: list[studioqt.CombinedWidgetItem]
         :type itemAt: studioqt.CombinedWidgetItem
         :rtype: None
@@ -281,7 +322,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def listView(self):
         """
         Return the list view that contains the items.
-        
+
         :rtype: ListView
         """
         return self._listView
@@ -289,7 +330,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def treeWidget(self):
         """
         Return the tree widget that contains the items.
-        
+
         :rtype: TreeWidget
         """
         return self._treeWidget
@@ -297,7 +338,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def clear(self):
         """
         Reimplemented for convenience.
-        
+
         Calls self.treeWidget().clear()
         """
         self.treeWidget().clear()
@@ -305,7 +346,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def refresh(self):
         """
         Refresh the sorting and size of the items.
-        
+
         :rtype: None
         """
         self.refreshSortBy()
@@ -314,7 +355,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def refreshSize(self):
         """
         Refresh the size of the items.
-        
+
         :rtype: None
         """
         self.setZoomAmount(self.zoomAmount() + 1)
@@ -324,7 +365,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def refreshSortBy(self):
         """
         Refresh the sorting of the items.
-        
+
         :rtype: None
         """
         self.treeWidget().refreshSortBy()
@@ -332,25 +373,39 @@ class CombinedWidget(QtWidgets.QWidget):
     def itemFromIndex(self, index):
         """
         Return a pointer to the QTreeWidgetItem assocated with the given index.
-        
+
         :type index: QtCore.QModelIndex
         :rtype: QtWidgets.QTreeWidgetItem
         """
         return self._treeWidget.itemFromIndex(index)
 
-    def textFromColumn(self, column):
+    def textFromItems(self, *args, **kwargs):
         """
-        Return all data for the given column
-        
-        :type column: int
-        :rtype: list[object]
+        Return all data for the given items and given column.
+
+        :type items: list[CombinedWidgetItem]
+        :type column: int or str
+        :type split: str
+        :type duplicates: bool
+        :rtype: list[str]
         """
-        return self._treeWidget.textFromColumn(column)
+        return self.treeWidget().textFromItems(*args, **kwargs)
+
+    def textFromColumn(self, *args, **kwargs):
+        """
+        Return all data for the given column.
+
+        :type column: int or str
+        :type split: str
+        :type duplicates: bool
+        :rtype: list[str]
+        """
+        return self.treeWidget().textFromColumn(*args, **kwargs)
 
     def toggleTextVisible(self):
         """
         Toggle the item text visibility.
-        
+
         :rtype: None
         """
         if self.isItemTextVisible():
@@ -361,7 +416,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setItemTextVisible(self, value):
         """
         Set the visibility of the item text.
-        
+
         :type value: bool
         :rtype: None
         """
@@ -371,7 +426,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def isItemTextVisible(self):
         """
         Return the visibility of the item text.
-        
+
         :rtype: bool
         """
         if self.isIconView():
@@ -382,7 +437,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def itemTextHeight(self):
         """
         Return the height of the item text.
-        
+
         :rtype: int
         """
         return self.DEFAULT_TEXT_HEIGHT * self.dpi()
@@ -390,7 +445,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def itemDelegate(self):
         """
         Return the item delegate for the views.
-        
+
         :rtype: CombinedItemDelegate
         """
         return self._delegate
@@ -398,48 +453,54 @@ class CombinedWidget(QtWidgets.QWidget):
     def settings(self):
         """
         Return the current state of the widget.
-        
+
         :rtype: dict
         """
         settings = {}
-        settings['padding'] = self.padding()
-        settings['spacing'] = self.spacing()
-        settings['zoomAmount'] = self.zoomAmount()
-        settings['sortOrder'] = self.sortOrder()
-        settings['sortColumn'] = self.sortColumn()
-        settings['columnLabels'] = self.treeWidget().columnLabels()
-        settings['groupOrder'] = self.treeWidget().groupOrder()
-        settings['groupColumn'] = self.treeWidget().groupColumn()
-        settings['selectedPaths'] = self.selectedPaths()
-        settings['itemTextVisible'] = self.isItemTextVisible()
+
+        settings["columnLabels"] = self.columnLabels()
+        settings["padding"] = self.padding()
+        settings["spacing"] = self.spacing()
+        settings["zoomAmount"] = self.zoomAmount()
+        settings["selectedPaths"] = self.selectedPaths()
+        settings["itemTextVisible"] = self.isItemTextVisible()
+        settings["treeWidget"] = self.treeWidget().settings()
+
         return settings
 
     def setSettings(self, settings):
         """
         Set the current state of the widget.
-        
+
         :type settings: dict
         :rtype: None
         """
         self.setToastEnabled(False)
-        columnLabels = settings.get('columnLabels', [])
+
+        # Must set the column labels first for sorting and grouping.
+        columnLabels = settings.get("columnLabels", [])
         self.setColumnLabels(columnLabels)
-        sortOrder = settings.get('sortOrder', 0)
-        sortColumn = settings.get('sortColumn', 0)
-        groupOrder = settings.get('groupOrder', 0)
-        groupColumn = settings.get('groupColumn', None)
-        self.sortByColumn(sortColumn, sortOrder, groupColumn, groupOrder)
-        padding = settings.get('padding', 5)
+
+        padding = settings.get("padding", 5)
         self.setPadding(padding)
-        spacing = settings.get('spacing', 2)
+
+        spacing = settings.get("spacing", 2)
         self.setSpacing(spacing)
-        zoomAmount = settings.get('zoomAmount', 100)
+
+        zoomAmount = settings.get("zoomAmount", 100)
         self.setZoomAmount(zoomAmount)
-        selectedPaths = settings.get('selectedPaths', [])
+
+        selectedPaths = settings.get("selectedPaths", [])
         self.selectPaths(selectedPaths)
-        itemTextVisible = settings.get('itemTextVisible', True)
+
+        itemTextVisible = settings.get("itemTextVisible", True)
         self.setItemTextVisible(itemTextVisible)
+
+        treeWidgetSettings = settings.get("treeWidget", {})
+        self.treeWidget().setSettings(treeWidgetSettings)
+
         self.setToastEnabled(True)
+
         return settings
 
     def createSortByMenu(self):
@@ -452,110 +513,137 @@ class CombinedWidget(QtWidgets.QWidget):
         return self.treeWidget().createCopyTextMenu()
 
     def createItemSettingsMenu(self):
-        menu = QtWidgets.QMenu('Item View', self)
-        action = QtWidgets.QAction('Show labels', menu)
-        action.setCheckable(True)
-        action.setChecked(self.isItemTextVisible())
-        action.triggered[bool].connect(self.setItemTextVisible)
+
+        menu = QtWidgets.QMenu("Item View", self)
+
+        action = studioqt.SeparatorAction("View Settings", menu)
         menu.addAction(action)
-        menu.addSeparator()
-        action = studioqt.SliderAction('Size', menu)
+
+        action = studioqt.SliderAction("Size", menu)
         action.slider().setMinimum(10)
         action.slider().setMaximum(200)
         action.slider().setValue(self.zoomAmount())
         action.slider().valueChanged.connect(self.setZoomAmount)
         menu.addAction(action)
-        action = studioqt.SliderAction('Border', menu)
+
+        action = studioqt.SliderAction("Border", menu)
         action.slider().setMinimum(0)
         action.slider().setMaximum(20)
         action.slider().setValue(self.padding())
         action.slider().valueChanged.connect(self.setPadding)
         menu.addAction(action)
-        action = studioqt.SliderAction('Spacing', menu)
+        #
+        action = studioqt.SliderAction("Spacing", menu)
         action.slider().setMinimum(self.DEFAULT_MIN_SPACING)
         action.slider().setMaximum(self.DEFAULT_MAX_SPACING)
         action.slider().setValue(self.spacing())
         action.slider().valueChanged.connect(self.setSpacing)
         menu.addAction(action)
+
+        action = studioqt.SeparatorAction("Item Options", menu)
+        menu.addAction(action)
+
+        action = QtWidgets.QAction("Show labels", menu)
+        action.setCheckable(True)
+        action.setChecked(self.isItemTextVisible())
+        action.triggered[bool].connect(self.setItemTextVisible)
+        menu.addAction(action)
+
         return menu
 
     def createSettingsMenu(self):
         """
         Create and return the settings menu for the widget.
-        
+
         :rtype: QtWidgets.QMenu
         """
-        menu = QtWidgets.QMenu('Item View', self)
+        menu = QtWidgets.QMenu("Item View", self)
+
         menu.addSeparator()
-        action = QtWidgets.QAction('Show labels', menu)
+
+        action = QtWidgets.QAction("Show labels", menu)
         action.setCheckable(True)
         action.setChecked(self.isItemTextVisible())
         action.triggered[bool].connect(self.setItemTextVisible)
         menu.addAction(action)
+
         menu.addSeparator()
+
         sortByMenu = self.treeWidget().createSortByMenu()
         menu.addMenu(sortByMenu)
+
         groupByMenu = self.treeWidget().createGroupByMenu()
         menu.addMenu(groupByMenu)
+
         copyTextMenu = self.treeWidget().createCopyTextMenu()
         menu.addMenu(copyTextMenu)
+
         menu.addSeparator()
-        action = studioqt.SliderAction('Size', menu)
+
+        action = studioqt.SliderAction("Size", menu)
         action.slider().setMinimum(10)
         action.slider().setMaximum(200)
         action.slider().setValue(self.zoomAmount())
         action.slider().valueChanged.connect(self.setZoomAmount)
         menu.addAction(action)
-        action = studioqt.SliderAction('Border', menu)
+
+        action = studioqt.SliderAction("Border", menu)
         action.slider().setMinimum(0)
         action.slider().setMaximum(20)
         action.slider().setValue(self.padding())
         action.slider().valueChanged.connect(self.setPadding)
         menu.addAction(action)
-        action = studioqt.SliderAction('Spacing', menu)
+        #
+        action = studioqt.SliderAction("Spacing", menu)
         action.slider().setMinimum(self.DEFAULT_MIN_SPACING)
         action.slider().setMaximum(self.DEFAULT_MAX_SPACING)
         action.slider().setValue(self.spacing())
         action.slider().valueChanged.connect(self.setSpacing)
         menu.addAction(action)
+
         return menu
 
-    def createItemsMenu(self, items = None):
+    def createItemsMenu(self, items=None):
         """
         Create the item menu for given item.
-        
+
         :rtype: QtWidgets.QMenu
         """
         item = items or self.selectedItem()
+
         menu = QtWidgets.QMenu(self)
+
         if item:
             try:
                 item.contextMenu(menu)
-            except Exception as msg:
+            except Exception, msg:
                 logger.exception(msg)
-
         else:
             action = QtWidgets.QAction(menu)
-            action.setText('No Item selected')
+            action.setText("No Item selected")
             action.setDisabled(True)
+
             menu.addAction(action)
+
         return menu
 
     def createContextMenu(self):
         """
         Create and return the context menu for the widget.
-        
+
         :rtype: QtWidgets.QMenu
         """
         menu = self.createItemsMenu()
+
         settingsMenu = self.createSettingsMenu()
         menu.addMenu(settingsMenu)
+
         return menu
 
     def contextMenuEvent(self, event):
         """
         Show the context menu.
-        
+
         :type event: QtCore.QEvent
         :rtype: None
         """
@@ -563,80 +651,109 @@ class CombinedWidget(QtWidgets.QWidget):
         point = QtGui.QCursor.pos()
         return menu.exec_(point)
 
-    def customSortOrder(self, indexByColumn = 'Path'):
+    # ------------------------------------------------------------------------
+    # Support for saving the current item order.
+    # ------------------------------------------------------------------------
+
+    def itemData(self, columnLabels, indexByColumn="Path"):
         """
-        Return the custom sort order for the items.
-        
+        Return the column data for all the current items. 
+
+        :type columnLabels: list[str]
+        :type indexByColumn: str
+
         :rtype: dict
+                
         """
         column1 = self.treeWidget().columnFromLabel(indexByColumn)
-        column2 = self.treeWidget().columnFromLabel('Custom Order')
-        data = {}
+
+        itemData = {}
+
         for item in self.items():
             key = item.data(column1, QtCore.Qt.EditRole)
-            value = item.data(column2, QtCore.Qt.EditRole)
-            data.setdefault(key, {})
-            data[key].setdefault('Custom Order', value)
 
-        return data
+            for columnLabel in columnLabels:
+                column = self.treeWidget().columnFromLabel(columnLabel)
+                value = item.data(column, QtCore.Qt.EditRole)
 
-    def setCustomSortOrder(self, data, indexByColumn = 'Path'):
+                itemData.setdefault(key, {})
+                itemData[key].setdefault(columnLabel, value)
+
+        return itemData
+
+    def setItemData(self, itemData, indexByColumn="Path"):
         """
-        Set the custom sort order for the items.
-        
-        :type data: dict
+        Set the item data for all the current items.
+
+        :type itemData: dict
+        :type indexByColumn: str
         """
         column1 = self.treeWidget().columnFromLabel(indexByColumn)
-        column2 = self.treeWidget().columnFromLabel('Custom Order')
+
         for item in self.items():
-            path = item.data(column1, QtCore.Qt.EditRole)
-            if path in data:
-                value = data[path].get('Custom Order')
-                if value:
-                    item.setData(column2, QtCore.Qt.EditRole, value)
+            key = item.data(column1, QtCore.Qt.EditRole)
 
-    def saveCustomSortOrder(self, path):
+            if key in itemData:
+
+                for columnLabel in itemData[key]:
+                    value = itemData[key].get(columnLabel)
+
+                    if value is not None:
+                        item.setText(columnLabel, value)
+
+                item.updateData()
+
+    def updateColumns(self):
         """
-        Save the current item order to the given path location.
-        
-        :type path: str
+        Update the column labels with the current item data.
+
         :rtype: None
         """
-        logger.debug('Saving custom order:' + path)
-        data = self.customSortOrder()
-        studioqt.saveJson(path, data)
+        self.treeWidget().updateHeaderLabels()
 
-    def loadCustomSortOrder(self, path):
+    def columnLabels(self):
         """
-        Read and then load the sort oder from the given path location.
-        
-        :type path: str
-        :rtype: None
+        Set all the column labels.
+
+        :rtype: list[str]
         """
-        if os.path.exists(path):
-            logger.debug('Loading custom order:' + path)
-            data = studioqt.readJson(path)
-            self.setCustomSortOrder(data)
+        return self.treeWidget().columnLabels()
+
+    def _removeDuplicates(self, labels):
+        """
+        Removes duplicates from a list in Python, whilst preserving order.
+
+        :type labels: list[str]
+        :rtype: list[str]
+        """
+        s = set()
+        sadd = s.add
+        return [x for x in labels if not (x in s or sadd(x))]
 
     def setColumnLabels(self, labels):
         """
         Set the columns for the widget.
-        
+
         :type labels: list[str]
         :rtype: None
         """
-        if 'Custom Order' not in labels:
-            labels.append('Custom Order')
-        if 'Search Order' not in labels:
-            labels.append('Search Order')
+        labels = self._removeDuplicates(labels)
+
+        if "Custom Order" not in labels:
+            labels.append("Custom Order")
+
+        if "Search Order" not in labels:
+            labels.append("Search Order")
+
         self.treeWidget().setHeaderLabels(labels)
-        self.setColumnHidden('Custom Order', True)
-        self.setColumnHidden('Search Order', True)
+
+        self.setColumnHidden("Custom Order", True)
+        self.setColumnHidden("Search Order", True)
 
     def items(self):
         """
         Return all the items in the widget.
-        
+
         :rtype: list[CombinedWidgetItem]
         """
         return self._treeWidget.items()
@@ -644,7 +761,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def addItems(self, items):
         """
         Add the given items to the combined widget.
-        
+
         :type items: list[studioqt.CombinedWidgetItem]
         :rtype: None
         """
@@ -655,7 +772,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def addItem(self, item):
         """
         Add the item to the tree widget.
-        
+
         :type item: CombinedWidgetItem
         :rtype: None
         """
@@ -664,36 +781,40 @@ class CombinedWidget(QtWidgets.QWidget):
     def columnLabelsFromItems(self):
         """
         Return the column labels from all the items.
-        
+
         :rtype: list[str]
         """
+
         seq = []
         for item in self.items():
             seq.extend(item.textColumnOrder)
 
         seen = set()
-        return [ x for x in seq if x not in seen and not seen.add(x) ]
+        return [x for x in seq if x not in seen and not seen.add(x)]
 
-    def setItems(self, items, sortEnabled = True):
+    def setItems(self, items, sortEnabled=True):
         """
         Sets the items to the widget.
-        
+
         :type items: list[CombinedWidgetItem]
         :rtype: None
         """
         if sortEnabled:
             sortOrder = self.sortOrder()
             sortColumn = self.sortColumn()
+
         self._treeWidget.clear()
         self._treeWidget.addTopLevelItems(items)
+
         self.setColumnLabels(self.columnLabelsFromItems())
+
         if sortEnabled:
             self.sortByColumn(sortColumn, sortOrder)
 
     def padding(self):
         """
         Return the item padding.
-        
+
         :rtype: int
         """
         return self._padding
@@ -701,7 +822,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setPadding(self, value):
         """
         Set the item padding.
-        
+
         :type: int
         :rtype: None
         """
@@ -710,12 +831,13 @@ class CombinedWidget(QtWidgets.QWidget):
         else:
             self._padding = value + 1
         self.repaint()
-        self.setToast('Border: ' + str(value))
+
+        self.setToast("Border: " + str(value))
 
     def spacing(self):
         """
         Return the spacing between the items.
-        
+
         :rtype: int
         """
         return self._listView.spacing()
@@ -723,18 +845,19 @@ class CombinedWidget(QtWidgets.QWidget):
     def setSpacing(self, spacing):
         """
         Set the spacing between the items.
-        
+
         :type spacing: int
         :rtype: None
         """
         self._listView.setSpacing(spacing)
         self.scrollToSelectedItem()
-        self.setToast('Spacing: ' + str(spacing))
+
+        self.setToast("Spacing: " + str(spacing))
 
     def iconSize(self):
         """
         Return the icon size for the views.
-        
+
         :rtype: QtCore.QSize
         """
         return self._iconSize
@@ -742,7 +865,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setIconSize(self, size):
         """
         Set the icon size for the views.
-        
+
         :type size: QtCore.QSize
         :rtype: None
         """
@@ -753,7 +876,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def clearSelection(self):
         """
         Clear the user selection.
-        
+
         :rtype: None
         """
         self._treeWidget.clearSelection()
@@ -761,7 +884,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def wheelScrollStep(self):
         """
         Return the wheel scroll step amount.
-        
+
         :rtype: int
         """
         return self.DEFAULT_WHEEL_SCROLL_STEP
@@ -769,7 +892,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def model(self):
         """
         Return the model that this view is presenting.
-        
+
         :rtype: QAbstractItemModel
         """
         return self._treeWidget.model()
@@ -777,7 +900,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def indexFromItem(self, item):
         """
         Return the QModelIndex assocated with the given item.
-        
+
         :type item: QtWidgets.QTreeWidgetItem.
         :rtype: QtCore.QModelIndex
         """
@@ -786,7 +909,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def selectionModel(self):
         """
         Return the current selection model.
-        
+
         :rtype: QtWidgets.QItemSelectionModel
         """
         return self._treeWidget.selectionModel()
@@ -794,7 +917,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def selectedItem(self):
         """
         Return the last selected non-hidden item.
-        
+
         :rtype: QtWidgets.QTreeWidgetItem
         """
         return self._treeWidget.selectedItem()
@@ -802,7 +925,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def selectedItems(self):
         """
         Return a list of all selected non-hidden items.
-        
+
         :rtype: list[QtWidgets.QTreeWidgetItem]
         """
         return self._treeWidget.selectedItems()
@@ -810,7 +933,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setItemHidden(self, item, value):
         """
         Set the visibility of given item.
-        
+
         :type item: QtWidgets.QTreeWidgetItem
         :type value: bool
         :rtype: None
@@ -820,7 +943,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setItemsHidden(self, items, value):
         """
         Set the visibility of given items.
-        
+
         :type items: list[QtWidgets.QTreeWidgetItem]
         :type value: bool
         :rtype: None
@@ -831,20 +954,19 @@ class CombinedWidget(QtWidgets.QWidget):
     def selectedPaths(self):
         """
         Return the selected item paths.
-        
+
         :rtype: list[str]
         """
         paths = []
         for item in self.selectedItems():
             path = item.url().toLocalFile()
             paths.append(path)
-
         return paths
 
     def selectPaths(self, paths):
         """
         Selected the items that have the given paths.
-        
+
         :type paths: list[str]
         :rtype: None
         """
@@ -856,7 +978,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def isIconView(self):
         """
         Return True if widget is in Icon mode.
-        
+
         :rtype: bool
         """
         return not self._listView.isHidden()
@@ -864,7 +986,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def isTableView(self):
         """
         Return True if widget is in List mode.
-        
+
         :rtype: bool
         """
         return not self._treeWidget.isHidden()
@@ -872,19 +994,19 @@ class CombinedWidget(QtWidgets.QWidget):
     def setViewMode(self, mode):
         """
         Set the view mode for this widget.
-        
+
         :type mode: str
         :rtype: None
         """
-        if mode == 'icon':
+        if mode == "icon":
             self.setIconMode()
-        elif mode == 'table':
+        elif mode == "table":
             self.setListMode()
 
     def setListMode(self):
         """
         Set the tree widget visible.
-        
+
         :rtype: None
         """
         self._listView.hide()
@@ -894,7 +1016,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setIconMode(self):
         """
         Set the list view visible.
-        
+
         :rtype: None
         """
         self._treeWidget.hide()
@@ -904,7 +1026,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def zoomAmount(self):
         """
         Return the zoom amount for the widget.
-        
+
         :rtype: int
         """
         return self._zoomAmount
@@ -912,44 +1034,50 @@ class CombinedWidget(QtWidgets.QWidget):
     def setZoomAmount(self, value):
         """
         Set the zoom amount for the widget.
-        
+
         :type value: int
         :rtype: None
         """
         if value < self.DEFAULT_MIN_LIST_SIZE:
             value = self.DEFAULT_MIN_LIST_SIZE
+
         self._zoomAmount = value
         size = QtCore.QSize(value * self.dpi(), value * self.dpi())
         self.setIconSize(size)
+
         if value >= self.DEFAULT_MIN_ICON_SIZE:
-            self.setViewMode('icon')
+            self.setViewMode("icon")
         else:
-            self.setViewMode('table')
+            self.setViewMode("table")
+
         self._treeWidget.setIndentation(0)
         self._treeWidget.setColumnWidth(0, value * self.dpi() + self.itemTextHeight())
         self.scrollToSelectedItem()
-        msg = 'Size: {0}%'.format(value)
+
+        msg = "Size: {0}%".format(value)
         self.setToast(msg)
 
     def wheelEvent(self, event):
         """
         Triggered on any wheel events for the current viewport.
-        
+
         :type event: QtWidgets.QWheelEvent
         :rtype: None
         """
         modifiers = QtWidgets.QApplication.keyboardModifiers()
+
         if modifiers == QtCore.Qt.ControlModifier or modifiers == QtCore.Qt.AltModifier:
             numDegrees = event.delta() / 8
             numSteps = numDegrees / 15
-            delta = numSteps * self.wheelScrollStep()
+
+            delta = (numSteps * self.wheelScrollStep())
             value = self.zoomAmount() + delta
             self.setZoomAmount(value)
 
     def setTextColor(self, color):
         """
         Set the item text color.
-        
+
         :type color: QtWidgets.QtColor
         """
         self._textColor = color
@@ -957,7 +1085,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def setTextSelectedColor(self, color):
         """
         Set the text color when an item is selected.
-        
+
         :type color: QtWidgets.QtColor
         """
         self._textSelectedColor = color
@@ -965,15 +1093,23 @@ class CombinedWidget(QtWidgets.QWidget):
     def setBackgroundColor(self, color):
         """
         Set the item background color.
-        
+
         :type color: QtWidgets.QtColor
         """
         self._backgroundColor = color
 
+    def setBackgroundHoverColor(self, color):
+        """
+        Set the background color when the mouse hovers over the item.
+
+        :type color: QtWidgets.QtColor
+        """
+        self._backgroundHoverColor = color
+
     def setBackgroundSelectedColor(self, color):
         """
         Set the background color when an item is selected.
-        
+
         :type color: QtWidgets.QtColor
         """
         self._backgroundSelectedColor = color
@@ -982,7 +1118,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def textColor(self):
         """
         Return the item text color.
-        
+
         :rtype: QtGui.QColor
         """
         return self._textColor
@@ -990,7 +1126,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def textSelectedColor(self):
         """
         Return the item text color when selected.
-        
+
         :rtype: QtGui.QColor
         """
         return self._textSelectedColor
@@ -998,7 +1134,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def backgroundColor(self):
         """
         Return the item background color.
-        
+
         :rtype: QtWidgets.QtColor
         """
         return self._backgroundColor
@@ -1006,7 +1142,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def backgroundHoverColor(self):
         """
         Return the background color for when the mouse is over an item.
-        
+
         :rtype: QtWidgets.QtColor
         """
         return self._backgroundHoverColor
@@ -1014,7 +1150,7 @@ class CombinedWidget(QtWidgets.QWidget):
     def backgroundSelectedColor(self):
         """
         Return the background color when an item is selected.
-        
+
         :rtype: QtWidgets.QtColor
         """
         return self._backgroundSelectedColor

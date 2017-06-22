@@ -1,4 +1,15 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/mutils\transferbase.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
 """
 A common abstract interface for saving poses, animation, selection sets and
 mirror tables
@@ -21,7 +32,10 @@ import json
 import time
 import getpass
 import logging
+
+
 logger = logging.getLogger(__name__)
+
 
 class TransferBase(object):
 
@@ -31,7 +45,9 @@ class TransferBase(object):
         :type data: str
         :rtype: dict
         """
-        data = data.replace(': false', ': False').replace(': true', ': True')
+        # data = json.loads(data)
+        # We don't use json.loads for performance reasons in python 2.6.
+        data = data.replace(": false", ": False").replace(": true", ": True")
         data = eval(data, {})
         return data
 
@@ -45,8 +61,7 @@ class TransferBase(object):
         result = {}
         for obj in data:
             result.setdefault(obj, {})
-
-        return {'objects': result}
+        return {"objects": result}
 
     @staticmethod
     def readDictData(data):
@@ -54,17 +69,15 @@ class TransferBase(object):
         :type: str
         :rtype: dict
         """
-        logger.debug('Reading .dict format')
+        logger.debug("Reading .dict format")
         data = eval(data, {})
         result = {}
         for obj in data:
-            result.setdefault(obj, {'attrs': {}})
+            result.setdefault(obj, {"attrs": {}})
             for attr in data[obj]:
                 typ, val = data[obj][attr]
-                result[obj]['attrs'][attr] = {'type': typ,
-                 'value': val}
-
-        return {'objects': result}
+                result[obj]["attrs"][attr] = {"type": typ, "value": val}
+        return {"objects": result}
 
     @classmethod
     def fromPath(cls, path):
@@ -85,26 +98,24 @@ class TransferBase(object):
         t = cls(**kwargs)
         for obj in objects:
             t.add(obj)
-
         return t
 
     def __init__(self):
         self._path = None
-        self._data = {'metadata': {},
-         'objects': {}}
+        self._data = {"metadata": {}, "objects": {}}
 
     def setMetadata(self, key, value):
         """
         :type key: str
         :type value: int | str | float | dict
         """
-        self.data()['metadata'][key] = value
+        self.data()["metadata"][key] = value
 
     def updateMetadata(self, metadata):
         """
         :type metadata: str
         """
-        self.data()['metadata'].update(metadata)
+        self.data()["metadata"].update(metadata)
 
     def metadata(self):
         """
@@ -116,7 +127,7 @@ class TransferBase(object):
         }
         :rtype: dict
         """
-        return self.data().get('metadata', {})
+        return self.data().get("metadata", {})
 
     def path(self):
         """
@@ -146,7 +157,7 @@ class TransferBase(object):
         """
         :rtype: dict
         """
-        return self.data().get('objects', {})
+        return self.data().get("objects", {})
 
     def object(self, name):
         """
@@ -186,6 +197,7 @@ class TransferBase(object):
         """
         if isinstance(objects, basestring):
             objects = [objects]
+
         for name in objects:
             self.objects()[name] = self.createObjectData(name)
 
@@ -195,58 +207,71 @@ class TransferBase(object):
         """
         if isinstance(objects, basestring):
             objects = [objects]
+
         for obj in objects:
             del self.objects()[obj]
 
-    def read(self, path = None):
+    def read(self, path=None):
         """
         Return the data from the path set on the Transfer object.
-        
+
         :rtype: dict
         """
         path = path or self.path()
-        with open(path, 'r') as f:
+
+        with open(path, "r") as f:
             data = f.read()
-        if path.endswith('.dict'):
+
+        if path.endswith(".dict"):
             data = TransferBase.readDictData(data)
-        elif path.endswith('.list'):
+        elif path.endswith(".list"):
             data = TransferBase.readListData(data)
         else:
             data = TransferBase.readJsonData(data)
+
         self.setData(data)
 
     @abc.abstractmethod
     def load(self, *args, **kwargs):
         pass
 
-    def save(self, path, description = None):
+    def save(self, path, description=None):
         """
         :type path: str
         """
-        logger.info('Saving pose: %s' % path)
-        ctime = str(time.time()).split('.')[0]
-        self.setMetadata('ctime', ctime)
-        self.setMetadata('version', '1.0.0')
-        self.setMetadata('user', getpass.getuser())
+        logger.info("Saving pose: %s" % path)
+
+        ctime = str(time.time()).split(".")[0]
+
+        self.setMetadata("ctime", ctime)
+        self.setMetadata("version", "1.0.0")
+        self.setMetadata("user", getpass.getuser())
+
         if description:
-            self.setMetadata('description', description)
-        metadata = {'metadata': self.metadata()}
-        data = self.dump(metadata)[:-1] + ','
-        objects = {'objects': self.objects()}
+            self.setMetadata("description", description)
+
+        metadata = {"metadata": self.metadata()}
+        data = self.dump(metadata)[:-1] + ","
+
+        objects = {"objects": self.objects()}
         data += self.dump(objects)[1:]
+
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
-            logger.debug('Creating dirname: ' + dirname)
+            logger.debug("Creating dirname: " + dirname)
             os.makedirs(dirname)
-        with open(path, 'w') as f:
-            f.write(str(data))
-        logger.info('Saved pose: %s' % path)
 
-    def dump(self, data = None):
+        with open(path, "w") as f:
+            f.write(str(data))
+
+        logger.info("Saved pose: %s" % path)
+
+    def dump(self, data=None):
         """
         :type data: str | dict
         :rtype: str
         """
         if data is None:
             data = self.data()
+
         return json.dumps(data, indent=2)

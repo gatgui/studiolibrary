@@ -1,9 +1,24 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/mutils\tempdir.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import shutil
 import getpass
 import tempfile
-__all__ = ['TempDir']
+
+
+__all__ = ["TempDir"]
+
 
 class TempDir(object):
 
@@ -12,11 +27,13 @@ class TempDir(object):
         :type subDirs: list[str]
         """
         user = getpass.getuser().lower()
-        tempdir = tempfile.gettempdir().replace('\\', '/')
-        self._path = os.path.join(tempdir, 'mutils', user, *args)
-        if kwargs.get('clean', False):
+        tempdir = tempfile.gettempdir().replace("\\", "/")
+        self._path = os.path.join(tempdir, "mutils", user, *args)
+
+        if kwargs.get("clean", False):
             self.clean()
-        if kwargs.get('makedirs', True):
+
+        if kwargs.get("makedirs", True):
             self.makedirs()
 
     def path(self):
@@ -38,3 +55,4 @@ class TempDir(object):
         """
         if not os.path.exists(self.path()):
             os.makedirs(self.path())
+

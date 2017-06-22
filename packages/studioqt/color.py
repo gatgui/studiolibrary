@@ -1,5 +1,18 @@
-#Embedded file name: C:/Users/hovel/Dropbox/packages/studiolibrary/1.23.2/build27/studiolibrary/packages/studioqt\color.py
+# Copyright 2017 by Kurt Rathjen. All Rights Reserved.
+#
+# This library is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+
 from studioqt import QtGui
+
 
 class Color(QtGui.QColor):
 
@@ -8,7 +21,7 @@ class Color(QtGui.QColor):
         """
         :type color: QtGui.QColor
         """
-        color = 'rgb(%d, %d, %d, %d)' % color.getRgb()
+        color = ('rgb(%d, %d, %d, %d)' % color.getRgb())
         return cls.fromString(color)
 
     @classmethod
@@ -18,9 +31,9 @@ class Color(QtGui.QColor):
         """
         a = 255
         try:
-            r, g, b, a = text.replace('rgb(', '').replace(')', '').split(',')
+            r, g, b, a = text.replace("rgb(", "").replace(")", "").split(",")
         except ValueError:
-            r, g, b = text.replace('rgb(', '').replace(')', '').split(',')
+            r, g, b = text.replace("rgb(", "").replace(")", "").split(",")
 
         return cls(int(r), int(g), int(b), int(a))
 
