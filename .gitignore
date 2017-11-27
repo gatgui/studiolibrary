@@ -138,3 +138,12 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
+/release/
+/debug/
+/eco/
+/*.dblite
+/*.env.tmp
+
+
