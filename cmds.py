@@ -86,7 +86,7 @@ _itemClasses = collections.OrderedDict()
 
 IGNORE_PATHS = ["/."]  # Ignore all paths the start with a "."
 ANALYTICS_ID = "UA-50172384-1"
-ANALYTICS_ENABLED = True
+ANALYTICS_ENABLED = False
 SHOW_IN_FOLDER_CMD = None
 
 
@@ -1080,7 +1080,7 @@ def sendEvent(name, version="1.0.0", an="StudioLibrary", tid=None):
     def _send(url):
         try:
             url = url.replace(" ", "")
-            f = urllib2.urlopen(url, None, 1.0)
+            #f = urllib2.urlopen(url, None, 1.0)
         except Exception:
             pass
 
