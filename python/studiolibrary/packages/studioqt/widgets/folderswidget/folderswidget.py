@@ -742,7 +742,15 @@ class SortFilterProxyModel(QtCore.QSortFilterProxyModel):
         :type sourceParent:
         :rtype: bool
         """
-        index = self.sourceModel().index(sourceRow, 0, sourceParent)
+        try:
+            index = self.sourceModel().index(sourceRow, 0, sourceParent)
+        except:
+            # PySide2 coming with Maya 2018 has a bug
+            # QFileSystemModel.index is not wrapped and the above call fails
+            if sourceParent:
+                index = sourceParent.child(sourceRow, 0)
+            else:
+                index = self._folderWidget.setRootPath(self._folderWidget.rootPath()).child(sourceRow, 0)
         path = str(self.sourceModel().filePath(index))
         return self.sourceModel().isPathValid(path)
 
