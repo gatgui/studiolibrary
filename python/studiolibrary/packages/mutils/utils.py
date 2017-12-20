@@ -224,6 +224,21 @@ def isProxyAttribute(name):
         return False
 
 
+def getProxySource(name):
+    """
+    :type name: str
+    :rtype: str
+    """
+    if not isProxyAttribute(name):
+        return None
+    else:
+        conns = maya.cmds.listConnections(name, s=1, d=0, p=1, sh=1, scn=1)
+        if not conns or len(conns) != 1:
+            return None
+        else:
+            return conns[0]
+
+
 def getSelectedObjects():
     """
     :rtype: list[str]

@@ -544,11 +544,18 @@ class Animation(mutils.Pose):
         if option is None or option == PasteOption.ReplaceAll:
             option = PasteOption.ReplaceCompletely
         objects = objects or []
-        logger.debug('Animation.load(objects=%s, option=%s, namespaces=%s, srcTime=%s, currentTime=%s)' % (len(objects),
-         str(option),
-         str(namespaces),
-         str(sourceTime),
-         str(currentTime)))
+        # extend selected objects with proxy sources
+        proxyObjects = set()
+        for dstObject in objects:
+            if maya.cmds.objExists(dstObject):
+                for attr in self.attrs(dstObject):
+                    proxySrc = mutils.getProxySource(dstObject + "." + attr)
+                    if proxySrc is not None:
+                        proxyObjects.add(proxySrc.split(".")[0])
+        objects.extend(proxyObjects)
+
+        logger.debug('Animation.load(objects=%s, option=%s, namespaces=%s, srcTime=%s, currentTime=%s)' %
+                     (len(objects), str(option), str(namespaces), str(sourceTime), str(currentTime)))
         srcObjects = self.objects().keys()
         if mirrorTable:
             self.setMirrorTable(mirrorTable)
@@ -577,6 +584,8 @@ class Animation(mutils.Pose):
                     if attrs is not None and attr not in attrs:
                         continue
                     dstAttr = mutils.Attribute(dstNode.name(), attr)
+                    if mutils.isProxyAttribute(dstAttr.fullname()):
+                        continue
                     srcCurve = self.animCurve(srcNode.name(), attr, withNamespace=True)
                     if not dstAttr.exists():
                         logger.debug('Skipping attribute: The destination attribute "%s.%s" does not exist!' % (dstAttr.name(), dstAttr.attr()))
