@@ -42,10 +42,10 @@ global proc shelf_StudioLibrary () {
         -enableBackground 0
         -align "center" 
         -labelOffset 0
-        -label "win"
         -font "tinyBoldLabelFont" 
-        -overlayLabelColor 0.8 0.8 0.8 
-        -overlayLabelBackColor 0 0 0 0.25 
+        -imageOverlayLabel "win" 
+        -overlayLabelColor 0 0 0 
+        -overlayLabelBackColor 1 1 1 0.2 
         -image "StudioLibrary.png" 
         -image1 "StudioLibrary.png" 
         -style "iconOnly" 
