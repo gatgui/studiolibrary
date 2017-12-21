@@ -472,27 +472,39 @@ class Animation(mutils.Pose):
             idx = 0
             while idx < len(objects):
                 name = objects[idx]
-                if maya.cmds.copyKey(name, time=(start, end), includeUpperBound=False, option='keys'):
+                attrs = maya.cmds.listAttr(name, unlocked=True, keyable=True) or []
+                attrs = list(set(attrs) - set(['translate', 'rotate', 'scale']))
+                animatedAttrs = {}
+                proxyAttrs = set()
+                for attr in attrs:
+                    fullname = '%s.%s' % (name, attr)
+                    dstNode, = maya.cmds.listConnections(fullname, destination=False) or [None]
+                    if dstNode:
+                        if mutils.isProxyAttribute(fullname):
+                            if not dstNode in objects:
+                                objects.append(dstNode)
+                                self.add(dstNode)
+                            proxyAttrs.add(attr)
+                        else:
+                            srcCurve = mutils.animCurve(fullname)
+                            if srcCurve and 'animCurve' in maya.cmds.nodeType(srcCurve):
+                                animatedAttrs[attr] = srcCurve
+                # Only copy/paste keys for non-proxy animated attributes
+                # Maya does strange things to proxy attribute's source animation curve on pasting
+                if maya.cmds.copyKey(name, time=(start, end), includeUpperBound=False, option='keys', attribute=animatedAttrs.keys()):
                     transform, = maya.cmds.duplicate(name, name='CURVE', parentOnly=True)
                     dstCurves.append(transform)
                     mutils.disconnectAll(transform)
-                    maya.cmds.pasteKey(transform)
-                    attrs = maya.cmds.listAttr(transform, unlocked=True, keyable=True) or []
-                    attrs = list(set(attrs) - set(['translate', 'rotate', 'scale']))
+                    maya.cmds.pasteKey(transform, attribute=animatedAttrs.keys())
                     for attr in attrs:
+                        if attr in proxyAttrs:
+                            continue
                         fullname = '%s.%s' % (transform, attr)
                         dstNode, = maya.cmds.listConnections(fullname, destination=False) or [None]
                         if dstNode:
-                            if mutils.isProxyAttribute(fullname):
-                                if not dstNode in objects:
-                                    print("Add '%s' to controllers to export" % dstNode)
-                                    objects.append(dstNode)
-                                    # Seems this is also required
-                                    self.add(dstNode)
-                                continue
                             dstCurve = maya.cmds.rename(dstNode, 'CURVE')
-                            srcCurve = mutils.animCurve('%s.%s' % (name, attr))
-                            if srcCurve and 'animCurve' in maya.cmds.nodeType(srcCurve):
+                            srcCurve = animatedAttrs.get(attr, None)
+                            if srcCurve:
                                 preInfinity = maya.cmds.getAttr(srcCurve + '.preInfinity')
                                 postInfinity = maya.cmds.getAttr(srcCurve + '.postInfinity')
                                 curveColor = maya.cmds.getAttr(srcCurve + '.curveColor')
