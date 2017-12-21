@@ -70,7 +70,7 @@ from studiolibrary.core.pluginmanager import PluginManager
 
 from studiolibrary.gui.mayadockwidgetmixin import MayaDockWidgetMixin
 from studiolibrary.gui.libraryitem import LibraryItem
-from studiolibrary.gui.librarywidget import LibraryWidget
+from studiolibrary.gui.librarywidget import LibraryWidget, LibraryWindow
 from studiolibrary.gui.previewwidget import PreviewWidget
 from studiolibrary.gui.librariesmenu import LibrariesMenu
 from studiolibrary.gui.settingsdialog import SettingsDialog

@@ -10,16 +10,20 @@ logger = logging.getLogger(__name__)
 
 class LibrariesMenu(QtWidgets.QMenu):
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         """
         """
         QtWidgets.QMenu.__init__(self, *args)
+        self._withWindow = kwargs.get("withWindow", False)
         self.setTitle('Libraries')
         self.reload()
 
     def reload(self):
         self.clear()
         for library in studiolibrary.libraries():
+            kwargs = library.kwargs()
+            kwargs["withWindow"] = self._withWindow
+            library.setKwargs(kwargs)
             action = LibraryAction(self, library)
             self.addAction(action)
             action.setStatusTip('Load library "%s" "%s"' % (library.name(), library.path()))

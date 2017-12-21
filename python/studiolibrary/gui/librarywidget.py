@@ -12,6 +12,7 @@ import studiolibrary
 __all__ = ['LibraryWidget']
 logger = logging.getLogger(__name__)
 
+
 class PreviewFrame(QtWidgets.QFrame):
     pass
 
@@ -20,7 +21,7 @@ class FoldersFrame(QtWidgets.QFrame):
     pass
 
 
-class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
+class LibraryWidgetMixin(object):
     DPI_ENABLED = False
     TRASH_ENABLED = True
     MIN_SLIDER_DPI = 80
@@ -31,8 +32,6 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
         """
         :type library: studiolibrary.Library
         """
-        QtWidgets.QWidget.__init__(self, None)
-        studiolibrary.MayaDockWidgetMixin.__init__(self, None)
         logger.info("Loading library window '{0}'".format(library.name()))
         self.setObjectName('studiolibrary')
         studiolibrary.analytics().logScreen('MainWindow')
@@ -163,7 +162,7 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
         self._previewFrame.layout().setSpacing(0)
         self._previewFrame.layout().setContentsMargins(0, 0, 0, 0)
         self._previewFrame.setMinimumWidth(5)
-        self.dockingChanged.connect(self.updateWindowTitle)
+        # self.dockingChanged.connect(self.updateWindowTitle)
         searchWidget = self.searchWidget()
         searchWidget.searchChanged.connect(self._searchChanged)
         studiolibrary.Record.onSaved.connect(self._recordSaved)
@@ -522,7 +521,7 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
         menu = QtWidgets.QMenu('', self)
         menu.setTitle('Settings')
         menu.setIcon(icon)
-        librariesMenu = studiolibrary.LibrariesMenu(menu)
+        librariesMenu = studiolibrary.LibrariesMenu(menu, withWindow=self.library().kwargs().get("withWindow", False))
         menu.addMenu(librariesMenu)
         menu.addSeparator()
         if self.DPI_ENABLED:
@@ -577,9 +576,10 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
         menu.addMenu(viewMenu)
         menu.addSeparator()
         if studiolibrary.isMaya():
-            menu.addSeparator()
             dockMenu = self.dockMenu()
-            menu.addMenu(dockMenu)
+            if dockMenu is not None:
+                menu.addSeparator()
+                menu.addMenu(dockMenu)
         menu.addSeparator()
         action = QtWidgets.QAction('Debug mode', menu)
         action.setCheckable(True)
@@ -1746,3 +1746,39 @@ class LibraryWidget(studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
         :rtype: bool
         """
         return self._isDebug
+
+
+class LibraryWidget(LibraryWidgetMixin, studiolibrary.MayaDockWidgetMixin, QtWidgets.QWidget):
+    def __init__(self, library):
+        QtWidgets.QWidget.__init__(self, None)
+        LibraryWidgetMixin.__init__(self, library)
+        studiolibrary.MayaDockWidgetMixin.__init__(self, None)
+        self.dockingChanged.connect(self.updateWindowTitle)
+
+
+class LibraryWindow(LibraryWidgetMixin, QtWidgets.QWidget):
+    def __init__(self, library):
+        QtWidgets.QWidget.__init__(self)
+        LibraryWidgetMixin.__init__(self, library)
+
+    def parentX(self):
+        """
+        :rtype: QtWidgets.QWidget
+        """
+        return self.parent() or self
+
+    def isFloating(self):
+        return False
+
+    def isDocked(self):
+        return not self.isFloating()
+
+    def dockMenu(self):
+        return None
+
+    def dockSettings(self):
+        return {}
+
+    def setDockSettings(self, settings):
+        pass
+

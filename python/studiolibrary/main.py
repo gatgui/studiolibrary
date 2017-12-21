@@ -23,7 +23,7 @@ def main(
     path=None,
     show=True,
     plugins=None,
-    analytics=True,
+    analytics=False,
     root=None,  # Legacy
     **kwargs
 ):

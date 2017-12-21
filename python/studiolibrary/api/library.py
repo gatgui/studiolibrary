@@ -136,6 +136,7 @@ class Library(QtCore.QObject):
         self._settings = {}
         self._isDefault = False
         self._libraryWidget = None
+        self._hasWindow = False
         self._settingsDialog = None
         self._pluginManager = studiolibrary.PluginManager()
 
@@ -631,11 +632,15 @@ This does not modify or delete the contents of the library.""" % self.name()
         """
         self.show(**self.kwargs())
 
-    def createLibraryWidget(self):
+    def createLibraryWidget(self, withWindow=False):
         """
         :rtype: studiolibrary.LibraryWidget
         """
-        return studiolibrary.LibraryWidget(library=self)
+        self._hasWindow = withWindow
+        if withWindow:
+            return studiolibrary.LibraryWindow(library=self)
+        else:
+            return studiolibrary.LibraryWidget(library=self)
 
     def show(self, **kwargs):
         """
@@ -653,12 +658,18 @@ This does not modify or delete the contents of the library.""" % self.name()
                 logger.debug("Dialog was canceled")
                 return
 
+        withWindow = kwargs.get("withWindow", False)
+
         logger.debug("Showing library '%s'" % self.path())
         self.setKwargs(kwargs)
 
+        if withWindow != self._hasWindow and self.libraryWidget():
+            self.libraryWidget().close()
+            self.setLibraryWidget(None)
+
         # Create a new window
         if not self.libraryWidget():
-            libraryWidget = self.createLibraryWidget()
+            libraryWidget = self.createLibraryWidget(withWindow)
             self.setLibraryWidget(libraryWidget)
         else:
             self.libraryWidget().close()

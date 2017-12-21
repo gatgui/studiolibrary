@@ -1,0 +1,5 @@
+
+global proc StudioLibraryWindow()
+{
+   python("import studiolibrary; studiolibrary.main(withWindow=True)");
+}
