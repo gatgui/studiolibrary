@@ -1,7 +1,7 @@
 import os
 import excons
 
-version = "2.2.6"
+version = "2.3.4"
 
 env = excons.MakeBaseEnv()
 
