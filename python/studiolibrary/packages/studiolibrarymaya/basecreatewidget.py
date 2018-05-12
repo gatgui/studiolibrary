@@ -23,8 +23,8 @@ try:
     import mutils
     import mutils.gui
     import maya.cmds
-except ImportError, e:
-    print e
+except ImportError as error:
+    print(error)
 
 __all__ = [
     "BaseCreateWidget",
@@ -64,6 +64,8 @@ class BaseCreateWidget(QtWidgets.QWidget):
         self.ui.thumbnailButton.clicked.connect(self.thumbnailCapture)
         self.ui.browseFolderButton.clicked.connect(self.browseFolder)
         self.ui.selectionSetButton.clicked.connect(self.showSelectionSetsMenu)
+
+        self.setCaptureMenuEnabled(True)
 
         try:
             self.selectionChanged()
@@ -330,6 +332,30 @@ class BaseCreateWidget(QtWidgets.QWidget):
         path = mutils.gui.tempThumbnailPath()
         mutils.gui.thumbnailCapture(path=path, captured=self._thumbnailCaptured)
 
+    def setCaptureMenuEnabled(self, enable):
+        """
+        Enable the capture menu for creating the thumbnail.
+
+        :type enable: bool
+        :rtype: None 
+        """
+        logger.info("Setting capture menu to %s", enable)
+
+        if enable:
+            parent = self.parent()
+            iconPath = mutils.gui.tempThumbnailPath()
+
+            menu = mutils.gui.ThumbnailCaptureMenu(
+                iconPath,
+                force=True,
+                parent=parent
+            )
+            menu.captured.connect(self._thumbnailCaptured)
+
+            self.ui.thumbnailButton.setMenu(menu)
+        else:
+            self.ui.thumbnailButton.setMenu(QtWidgets.QMenu(self))
+
     def showThumbnailCaptureDialog(self):
         """
         Ask the user if they would like to capture a thumbnail.
@@ -337,7 +363,7 @@ class BaseCreateWidget(QtWidgets.QWidget):
         :rtype: int
         """
         title = "Create a thumbnail"
-        text = "Would you like to capture a thumbanil?"
+        text = "Would you like to capture a thumbnail?"
 
         buttons = QtWidgets.QMessageBox.Yes | \
                   QtWidgets.QMessageBox.Ignore | \
@@ -379,28 +405,30 @@ class BaseCreateWidget(QtWidgets.QWidget):
                     return
 
             path += "/" + name
-            description = self.description()
+
+            iconPath = self.iconPath()
+            metadata = {"description": self.description()}
 
             self.save(
                 objects,
                 path=path,
-                iconPath=self.iconPath(),
-                description=description,
+                iconPath=iconPath,
+                metadata=metadata,
             )
 
-        except Exception, e:
+        except Exception as e:
             title = "Error while saving"
             studioqt.MessageBox.critical(self.libraryWidget(), title, str(e))
             raise
 
-    def save(self, objects, path, iconPath, description):
+    def save(self, objects, path, iconPath, metadata):
         """
         Save the item with the given objects to the given disc location path.
 
         :type objects: list[str]
         :type path: str
         :type iconPath: str
-        :type description: str
+        :type metadata: None or dict
 
         :rtype: None
         """
@@ -409,6 +437,6 @@ class BaseCreateWidget(QtWidgets.QWidget):
             objects,
             path=path,
             iconPath=iconPath,
-            description=description,
+            metadata=metadata,
         )
         self.close()

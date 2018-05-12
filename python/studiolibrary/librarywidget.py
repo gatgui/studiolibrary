@@ -16,6 +16,7 @@ import os
 import time
 import copy
 import logging
+from functools import partial
 
 from studioqt import QtGui
 from studioqt import QtCore
@@ -24,7 +25,9 @@ from studioqt import QtWidgets
 import studioqt
 import studiolibrary
 
+
 __all__ = ["LibraryWidget"]
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +75,7 @@ class LibraryWidget(QtWidgets.QWidget):
             },
         "theme": {
                 "accentColor": "rgb(0, 175, 240, 255)",
-                "backgroundColor": "rgb(60, 60, 80, 255)",
+                "backgroundColor": "rgb(60, 64, 79, 255)",
             }
         }
 
@@ -84,8 +87,6 @@ class LibraryWidget(QtWidgets.QWidget):
 
     RECURSIVE_SEARCH_DEPTH = 3
     RECURSIVE_SEARCH_ENABLED = False
-
-    IGNORE_PATHS = studiolibrary.IGNORE_PATHS
 
     # Still in development
     DPI_ENABLED = False
@@ -171,7 +172,8 @@ class LibraryWidget(QtWidgets.QWidget):
 
         self.setObjectName("studiolibrary")
 
-        studiolibrary.sendEvent("MainWindow", version=studiolibrary.version())
+        version = studiolibrary.version()
+        studiolibrary.sendAnalytics("MainWindow", version=version)
 
         resource = studiolibrary.resource()
         self.setWindowIcon(resource.icon("icon_black"))
@@ -562,6 +564,7 @@ class LibraryWidget(QtWidgets.QWidget):
             self.refreshFolders()
             self.refreshItems()
             self.updateWindowTitle()
+            self.showToastMessage("Refreshed", duration=1000)
 
     # -----------------------------------------------------------------
     # Methods for the folders widget
@@ -609,59 +612,6 @@ class LibraryWidget(QtWidgets.QWidget):
         """
         self.foldersWidget().selectPaths(paths)
 
-    def showInFolder(self):
-        """
-        Show the selected folder in the file explorer.
-
-        :rtype: None 
-        """
-        path = self.selectedFolderPath()
-        studiolibrary.showInFolder(path)
-
-    def createFolder(self, *args):
-        """
-        Create a new folder on disc at the given path.
-        
-        :type args: list[str]
-        :rtype: str 
-        """
-        path = os.path.join(*args)
-        path = studiolibrary.normPath(path)
-
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        db = self.database()
-        db.addPath(path)
-
-        self.refresh()
-        self.selectFolderPath(path)
-
-        return path
-
-    def renameFolder(self, src, dst):
-        """
-        Rename the given src path to the given dst path.
-
-        :type src: str 
-        :type dst: str 
-        :rtype: str 
-        """
-        try:
-            dst = studiolibrary.renamePath(src, dst)
-
-            db = self.database()
-            db.renamePath(src, dst)
-
-            self.refresh()
-            self.selectFolderPath(dst)
-
-        except Exception, e:
-            self.showExceptionDialog("Rename Path Error", e)
-            raise
-
-        return dst
-
     @studioqt.showWaitCursor
     def refreshFolders(self):
         """
@@ -684,161 +634,64 @@ class LibraryWidget(QtWidgets.QWidget):
         
         :rtype: None 
         """
-        root = self.path()
-        ignore = self.isInvalidFolderPath
+        rootPath = self.path()
         trashPath = self.trashPath()
 
         paths = {
-            root: {
+            rootPath: {
                 "iconPath": "none",
                 "bold": True,
                 "text": "FOLDERS",
+                "expanded": True,
             }
         }
 
-        for p in studiolibrary.findPaths(root, ignore=ignore):
+        for item in studiolibrary.findItems(rootPath):
 
-            paths[p] = {}
+            if self.isValidInFolderView(item):
 
-            if trashPath == p:
-                iconPath = studioqt.resource.get("icons", "delete.png")
-                paths[p] = {
-                    "iconPath": iconPath
-                }
+                path = item.path()
+                paths[path] = {}
 
-        self.foldersWidget().setPaths(paths, root=root)
+                if trashPath == path:
+                    iconPath = studioqt.resource.get("icons", "delete.png")
+                    paths[path] = {
+                        "iconPath": iconPath
+                    }
 
-        # Force the root folder item to be expanded
-        folder = self.foldersWidget().itemFromPath(root)
-        folder.setExpanded(True)
+        self.foldersWidget().setPaths(paths, root=rootPath)
 
-    def isInvalidFolderPath(self, path):
+    def isValidInFolderView(self, item):
         """
-        Return True if the given path is an invalid folder path.
-
-        :type path: str
-        :rtype: bool 
-        """
-        return not self.isValidFolderPath(path)
-
-    def isValidFolderPath(self, path):
-        """
-        Return True if the given path is a valid folder.
+        Return True if the given item should be shown in the folder view.
         
-        :type path: str
+        :type item: studiolibrary.LibraryItem
         :rtype: bool 
         """
-        if not self.isTrashFolderVisible() and self.isPathInTrash(path):
+        if not self.isTrashFolderVisible() and self.isPathInTrash(item.path()):
             return False
 
-        if os.path.isfile(path):
-            return False
+        return item.DisplayInFolderView
 
-        if studiolibrary.isValidItemPath(path):
-            return False
-
-        for ignore in self.IGNORE_PATHS:
-            if ignore.lower() in path.lower():
-                return False
-
-        return True
-
-    def createFolderMenu(self):
+    def createFolderContextMenu(self):
         """
         Return the folder menu for the selected folders.
 
         :rtype: QtWidgets.QMenu
         """
-        menu = QtWidgets.QMenu(self)
-
-        if self.isLocked():
-            action = menu.addAction("Locked")
-            action.setEnabled(False)
-        else:
-            menu.addMenu(self.createNewMenu())
-
-            folders = self.selectedFolderPaths()
-
-            if folders:
-                m = self.createFolderEditMenu(menu)
-                menu.addMenu(m)
-
-            menu.addSeparator()
-            menu.addMenu(self.createSettingsMenu())
-
-        return menu
-
-    def createFolderEditMenu(self, parent):
-        """
-        Create the menu for editing the folders.
-        
-        :type parent: QtWidgets.QMenu
-        :rtype: QtWidgets.QMenu
-        """
-        selectedFolders = self.selectedFolderPaths()
-
-        menu = QtWidgets.QMenu(parent)
-        menu.setTitle("Edit")
-
-        if len(selectedFolders) == 1:
-            action = QtWidgets.QAction("Rename", menu)
-            action.triggered.connect(self.showRenameFolderDialog)
-            menu.addAction(action)
-
-            action = QtWidgets.QAction("Show in Folder", menu)
-            action.triggered.connect(self.showInFolder)
-            menu.addAction(action)
-
-            if self.trashEnabled():
-                menu.addSeparator()
-
-                action = QtWidgets.QAction("Move to Trash", menu)
-                action.setEnabled(not self.isTrashSelected())
-                action.triggered.connect(self.showMoveFoldersToTrashDialog)
-                menu.addAction(action)
-
-        return menu
-
-    def showRenameFolderDialog(self, parent=None):
-        """
-        Show the dialog for renaming the selected folder.
-        
-        :rtype: None
-        """
-        parent = parent or self
 
         path = self.selectedFolderPath()
 
-        name, button = studioqt.MessageBox.input(
-            parent,
-            "Rename Folder",
-            "Rename the selected folder to:",
-            inputText=os.path.basename(path),
-        )
-        name = name.strip()
+        items = []
 
-        if name and button == QtWidgets.QDialogButtonBox.Ok:
-            self.renameFolder(path, name)
+        if path:
+            item = studiolibrary.itemFromPath(path, libraryWidget=self)
 
-    def showCreateFolderDialog(self, parent=None):
-        """
-        Show the dialog for creating a new folder.
-        
-        :rtype: None
-        """
-        parent = parent or self
+            if item:
+                items = [item]
+                self._item_ = item
 
-        path = self.selectedFolderPath() or self.path()
-
-        name, button = studioqt.MessageBox.input(
-            parent,
-            "Create a new folder",
-            "Create a new folder with the name:",
-        )
-        name = name.strip()
-
-        if name and button == QtWidgets.QDialogButtonBox.Ok:
-            self.createFolder(path, name)
+        return self.createItemContextMenu(items)
 
     # -----------------------------------------------------------------
     # Methods for the items widget
@@ -1016,7 +869,7 @@ class LibraryWidget(QtWidgets.QWidget):
 
     def createItemsFromUrls(self, urls):
         """
-        Return a new instance of the items to be shown from the given urls.
+        Return a new list of items from the given urls.
 
         :rtype: list[studiolibrary.LibraryItem]
         """
@@ -1091,7 +944,7 @@ class LibraryWidget(QtWidgets.QWidget):
         point = widget.mapToGlobal(QtCore.QPoint(0, widget.height()))
         menu.exec_(point)
 
-    def createNewMenu(self):
+    def createNewItemMenu(self):
         """
         Return the new menu for adding new folders and items.
 
@@ -1104,17 +957,11 @@ class LibraryWidget(QtWidgets.QWidget):
         menu.setIcon(icon)
         menu.setTitle("New")
 
-        icon = studiolibrary.resource().icon("folder", color=color)
-        action = QtWidgets.QAction(icon, "Folder", menu)
-        action.triggered.connect(self.showCreateFolderDialog)
-        menu.addAction(action)
+        def _key(cls):
+            return cls.MenuOrder
 
-        separator = QtWidgets.QAction("", menu)
-        separator.setSeparator(True)
-        menu.addAction(separator)
-
-        for itemClass in studiolibrary.itemClasses():
-            action = itemClass.createAction(menu, self)
+        for cls in sorted(studiolibrary.registeredItems(), key=_key):
+            action = cls.createAction(menu, self)
 
             if action:
                 icon = studioqt.Icon(action.icon())
@@ -1151,9 +998,9 @@ class LibraryWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
         menu.addSeparator()
-        themesMenu = studioqt.ThemesMenu(menu)
-        themesMenu.setCurrentTheme(self.theme())
-        themesMenu.themeTriggered.connect(self.setTheme)
+        theme = self.theme()
+        themesMenu = studioqt.ThemesMenu(menu, theme)
+        themesMenu.triggered.connect(self.reloadStyleSheet)
         menu.addMenu(themesMenu)
 
         menu.addSeparator()
@@ -1229,7 +1076,7 @@ class LibraryWidget(QtWidgets.QWidget):
 
         :rtype: QtWidgets.QAction
         """
-        menu = self.createNewMenu()
+        menu = self.createNewItemMenu()
 
         point = self.menuBarWidget().rect().bottomLeft()
         point = self.menuBarWidget().mapToGlobal(point)
@@ -1262,7 +1109,7 @@ class LibraryWidget(QtWidgets.QWidget):
         :type pos: None or QtCore.QPoint
         :rtype: QtWidgets.QAction
         """
-        menu = self.createFolderMenu()
+        menu = self.createFolderContextMenu()
 
         point = QtGui.QCursor.pos()
         point.setX(point.x() + 3)
@@ -1307,7 +1154,7 @@ class LibraryWidget(QtWidgets.QWidget):
             item.contextMenu(menu)
 
         if not self.isLocked():
-            menu.addMenu(self.createNewMenu())
+            menu.addMenu(self.createNewItemMenu())
 
             if item:
                 editMenu = studioqt.Menu(menu)
@@ -1319,9 +1166,11 @@ class LibraryWidget(QtWidgets.QWidget):
                 if self.trashEnabled():
                     editMenu.addSeparator()
 
+                    callback = partial(self.showMoveItemsToTrashDialog, [item])
+
                     action = QtWidgets.QAction("Move to Trash", editMenu)
                     action.setEnabled(not self.isTrashSelected())
-                    action.triggered.connect(self.showMoveItemsToTrashDialog)
+                    action.triggered.connect(callback)
                     editMenu.addAction(action)
 
         menu.addSeparator()
@@ -1385,8 +1234,8 @@ class LibraryWidget(QtWidgets.QWidget):
 
         try:
             self.itemsWidget().setItemData(data)
-        except Exception, msg:
-            logger.exception(msg)
+        except Exception as error:
+            logger.exception(error)
 
     def saveItemData(self, columns):
         """
@@ -1515,11 +1364,11 @@ class LibraryWidget(QtWidgets.QWidget):
 
                 movedItems.append(item)
 
-        except Exception, e:
-            self.showExceptionDialog("Move Error", e)
+        except Exception as error:
+            self.showExceptionDialog("Move Error", error)
             raise
         finally:
-            self.refreshItems()
+            self.refresh()
             self.selectItems(movedItems)
 
     # -----------------------------------------------------------------------
@@ -1765,8 +1614,8 @@ class LibraryWidget(QtWidgets.QWidget):
         if item:
             try:
                 item.showPreviewWidget(self)
-            except Exception, e:
-                self.showErrorMessage(e)
+            except Exception as error:
+                self.showErrorMessage(error)
                 self.clearPreviewWidget()
                 raise
         else:
@@ -2022,12 +1871,12 @@ class LibraryWidget(QtWidgets.QWidget):
         path = self.settingsPath()
         data = {}
 
-        logger.debug("Reading settings {path}".format(path=path))
+        logger.debug(u"Reading settings {path}".format(path=path))
 
         try:
             data = studiolibrary.readJson(path)
-        except Exception, e:
-            logging.exception(e)
+        except Exception as error:
+            logging.exception(error)
 
         return data.get(key, {})
 
@@ -2211,6 +2060,7 @@ class LibraryWidget(QtWidgets.QWidget):
         :rtype: None
         """
         self._theme = theme
+        self._theme.updated.connect(self.reloadStyleSheet)
         self.reloadStyleSheet()
 
     def theme(self):
@@ -2361,29 +2211,14 @@ class LibraryWidget(QtWidgets.QWidget):
         self.createTrashFolder()
         self.moveItems(items, dst=self.trashPath(), force=True)
 
-    def moveFolderToTrash(self, folder):
-        """
-        Move the given folder item to the trash path.
-
-        :type folder: studioqt.TreeWidgetItem
-        :rtype: None
-        """
-        self.foldersWidget().clearSelection()
-        self.createTrashFolder()
-
-        src = folder.path()
-        dst = os.path.join(self.trashPath(), os.path.basename(src))
-        dst = studiolibrary.generateUniquePath(dst)
-
-        self.renameFolder(src, dst=dst)
-
-    def showMoveItemsToTrashDialog(self):
+    def showMoveItemsToTrashDialog(self, items=None):
         """
         Show the "Move to trash" dialog for the selected items.
 
+        :type items: list[studiolibrary.LibraryItem] or None
         :rtype: None
         """
-        items = self.selectedItems()
+        items = items or self.selectedItems()
 
         if items:
             title = "Move to trash?"
@@ -2394,24 +2229,6 @@ class LibraryWidget(QtWidgets.QWidget):
 
             if result == QtWidgets.QMessageBox.Yes:
                 self.moveItemsToTrash(items)
-
-    def showMoveFoldersToTrashDialog(self):
-        """
-        Show the "Move to trash" dialog for the selected folders.
-        
-        :rtype: None
-        """
-        item = self.foldersWidget().selectedItem()
-
-        if item:
-            title = "Move to trash?"
-            text = "Are you sure you want to move the selected " \
-                   "folder/s to the trash?"
-
-            result = self.showQuestionDialog(title, text)
-
-            if result == QtWidgets.QMessageBox.Yes:
-                self.moveFolderToTrash(item)
 
     # -----------------------------------------------------------------------
     # Support for message boxes
@@ -2520,7 +2337,7 @@ class LibraryWidget(QtWidgets.QWidget):
         logger.exception(error)
         self.showErrorDialog(title, error)
 
-    def showQuestionDialog(self, title, text):
+    def showQuestionDialog(self, title, text, buttons=None):
         """
         A convenience method for showing a question dialog to the user.
 
@@ -2528,7 +2345,8 @@ class LibraryWidget(QtWidgets.QWidget):
         :type text: str
         :rtype: QMessageBox.StandardButton
         """
-        buttons = QtWidgets.QMessageBox.Yes | \
+        buttons = buttons or \
+                  QtWidgets.QMessageBox.Yes | \
                   QtWidgets.QMessageBox.No | \
                   QtWidgets.QMessageBox.Cancel
 
