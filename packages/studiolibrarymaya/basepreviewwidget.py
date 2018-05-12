@@ -24,8 +24,8 @@ try:
     import mutils
     import mutils.gui
     import maya.cmds
-except ImportError, e:
-    print e
+except ImportError as error:
+    print(error)
 
 
 __all__ = [
@@ -68,8 +68,8 @@ class BasePreviewWidget(QtWidgets.QWidget):
             self.selectionChanged()
             self.setScriptJobEnabled(True)
             self.updateNamespaceEdit()
-        except NameError, msg:
-            logger.exception(msg)
+        except NameError as error:
+            logger.exception(error)
 
         path = self.item().thumbnailPath()
         if os.path.exists(path):
@@ -102,6 +102,39 @@ class BasePreviewWidget(QtWidgets.QWidget):
         self.ui.infoToggleBoxButton.toggled[bool].connect(self.ui.infoToggleBoxFrame.setVisible)
         self.ui.optionsToggleBoxButton.toggled[bool].connect(self.ui.optionsToggleBoxFrame.setVisible)
         self.ui.namespaceToggleBoxButton.toggled[bool].connect(self.ui.namespaceToggleBoxFrame.setVisible)
+
+    def isEditable(self):
+        """
+        Return True if the user can edit the item.
+
+        :rtype: bool 
+        """
+        item = self.item()
+        editable = True
+
+        if item and item.libraryWidget():
+            editable = not item.libraryWidget().isLocked()
+
+        return editable
+
+    def setCaptureMenuEnabled(self, enable):
+        """
+        Enable the capture menu for editing the thumbnail.
+
+        :rtype: None 
+        """
+        if enable:
+            parent = self.item().libraryWidget()
+
+            iconPath = self.iconPath()
+            if iconPath == "":
+                iconPath = self.item().thumbnailPath()
+
+            menu = mutils.gui.ThumbnailCaptureMenu(iconPath, parent=parent)
+            menu.captured.connect(self.setIconPath)
+            self.ui.thumbnailButton.setMenu(menu)
+        else:
+            self.ui.thumbnailButton.setMenu(QtWidgets.QMenu(self))
 
     def item(self):
         """
@@ -433,7 +466,6 @@ class BasePreviewWidget(QtWidgets.QWidget):
         """
         try:
             self.item().load()
-        except Exception, e:
-            title = "Error while loading"
-            self.item().showErrorDialog(title, str(e))
+        except Exception as error:
+            self.item().showErrorDialog("Error while loading", str(error))
             raise
