@@ -21,7 +21,7 @@ class FolderItem(studiolibrary.LibraryItem):
 
     RegisterOrder = 100
     EnableNestedItems = True
-    DisplayInFolderView = True
+    DisplayInSidebar = True
 
     MenuName = "Folder"
     MenuOrder = 1
@@ -62,10 +62,10 @@ class FolderItem(studiolibrary.LibraryItem):
             item = cls(path, libraryWidget=libraryWidget)
             item.save()
 
-    def updateData(self):
+    def updatePathData(self):
         """Overriding this method to force the item type to Folder"""
-        super(FolderItem, self).updateData()
-        self.setText("Type", "Folder")
+        super(FolderItem, self).updatePathData()
+        self.setText("type", "Folder")
 
     def doubleClicked(self):
         """Overriding this method to show the items contained in the folder."""
@@ -80,7 +80,6 @@ class FolderItem(studiolibrary.LibraryItem):
         super(FolderItem, self).save(*args, **kwargs)
 
         if self.libraryWidget():
-            self.libraryWidget().refresh()
             self.libraryWidget().selectFolderPath(self.path())
 
 
